@@ -1,5 +1,5 @@
 # CHANGE [2026-08-30 12:58 +08:00] [WH400]: 构建静态前端镜像并由轻量 Web 服务提供虚拟机部署页面。
-FROM node:24-alpine AS build
+FROM node:22-bookworm-slim AS build
 WORKDIR /app
 COPY package*.json ./
 RUN npm install

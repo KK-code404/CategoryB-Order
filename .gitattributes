@@ -1,0 +1,5 @@
+# Keep Linux deployment entrypoints executable and free of Windows CRLF line endings.
+*.sh text eol=lf
+deploy/Caddyfile text eol=lf
+Dockerfile text eol=lf
+*/Dockerfile text eol=lf

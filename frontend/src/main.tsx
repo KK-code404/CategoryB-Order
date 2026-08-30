@@ -12,20 +12,27 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
       locale={zhCN}
       theme={{
         token: {
-          colorPrimary: '#1677ff',
-          colorSuccess: '#16a36a',
-          colorWarning: '#f5a623',
-          colorError: '#e5484d',
-          colorText: '#172033',
-          colorBorder: '#e5eaf2',
-          borderRadius: 6,
-          fontFamily: 'Inter, PingFang SC, Microsoft YaHei, sans-serif',
+          colorPrimary: '#665cf6',
+          colorSuccess: '#138a5b',
+          colorWarning: '#ad6800',
+          colorError: '#c73a43',
+          colorText: '#292743',
+          colorTextSecondary: '#73718a',
+          colorBorder: '#e7e8f2',
+          colorBgBase: '#ffffff',
+          colorBgLayout: '#f4f5fb',
+          borderRadius: 8,
+          fontFamily: 'Segoe UI, PingFang SC, Microsoft YaHei, sans-serif',
           fontSize: 13,
         },
         components: {
-          Table: { headerBg: '#f7f9fc', headerColor: '#33415c', cellPaddingBlockSM: 10 },
-          Layout: { bodyBg: '#f4f7fb', siderBg: '#062b5c', headerBg: '#062b5c' },
-          Menu: { darkItemBg: '#062b5c', darkSubMenuItemBg: '#062b5c', darkItemSelectedBg: '#0d63ce' },
+          Button: { controlHeight: 36, primaryColor: '#ffffff', defaultBg: '#ffffff', defaultBorderColor: '#e2e3ef' },
+          Table: { headerBg: '#f7f7fc', headerColor: '#5b5872', cellPaddingBlockSM: 10, borderColor: '#ececf4', rowHoverBg: '#f5f3ff' },
+          Layout: { bodyBg: '#f4f5fb', siderBg: '#ffffff', headerBg: '#ffffff' },
+          Menu: { itemBg: '#ffffff', itemColor: '#66647b', itemHoverBg: '#f4f2ff', itemHoverColor: '#5148d8', itemSelectedBg: '#eeecff', itemSelectedColor: '#5b51e5', itemBorderRadius: 6 },
+          Input: { activeBorderColor: '#665cf6', hoverBorderColor: '#8881f8' },
+          Select: { activeBorderColor: '#665cf6', hoverBorderColor: '#8881f8' },
+          DatePicker: { activeBorderColor: '#665cf6', hoverBorderColor: '#8881f8' },
         },
       }}
     >

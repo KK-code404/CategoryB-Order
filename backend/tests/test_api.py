@@ -2,9 +2,11 @@ from io import BytesIO
 
 from fastapi.testclient import TestClient
 from openpyxl import Workbook
+from sqlalchemy import select
 
 from app.db import SessionLocal
-from app.models import LedgerEntry, OutboundMail
+from app.models import LedgerEntry, OutboundMail, User
+from app.security import hash_password
 
 
 # CHANGE [2026-08-30 12:58 +08:00] [WH400]: 验证登录、工作台内容与安全 Cookie 会话主路径。
@@ -15,6 +17,19 @@ def test_login_and_dashboard(sales_client: TestClient):
     assert payload["stats"]["pending_emails"] >= 1
     assert payload["lines"]
     assert "access_token" in sales_client.cookies
+
+
+# CHANGE [2026-08-30 18:05 +08:00] [WH400]: 验证管理员可使用非邮箱格式账号登录。
+def test_plain_account_login(client: TestClient):
+    with SessionLocal() as db:
+        admin = db.scalar(select(User).where(User.email == "admin@example.com"))
+        assert admin is not None
+        admin.email = "adminkk"
+        admin.password_hash = hash_password("test-admin-password-2026!")
+        db.commit()
+    response = client.post("/api/auth/login", json={"email": "adminkk", "password": "test-admin-password-2026!"})
+    assert response.status_code == 200
+    assert response.json()["role"] == "ADMIN"
 
 
 # CHANGE [2026-08-30 12:58 +08:00] [WH400]: 验证代理商只能读取自己的订单与发货记录。

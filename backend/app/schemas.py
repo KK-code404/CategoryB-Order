@@ -6,9 +6,9 @@ from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_serializer
 from .models import ShipmentStatus, UserRole
 
 
-# CHANGE [2026-08-30 12:58 +08:00] [WH400]: 定义登录请求并限制密码空值。
+# CHANGE [2026-08-30 18:05 +08:00] [WH400]: 登录标识同时兼容简短账号和既有邮箱账号。
 class LoginRequest(BaseModel):
-    email: EmailStr
+    email: str = Field(min_length=3, max_length=255)
     password: str = Field(min_length=8, max_length=128)
 
 

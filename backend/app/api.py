@@ -58,12 +58,13 @@ def health() -> dict[str, str]:
     return {"status": "ok", "service": settings.app_name}
 
 
-# CHANGE [2026-08-30 12:58 +08:00] [WH400]: 校验邮箱密码并设置严格同站 HttpOnly 会话 Cookie。
+# CHANGE [2026-08-30 18:05 +08:00] [WH400]: 校验账号密码并设置严格同站 HttpOnly 会话 Cookie。
 @router.post("/auth/login", response_model=UserOut)
 def login(payload: LoginRequest, response: Response, request: Request, db: Session = Depends(get_db)) -> User:
-    user = db.scalar(select(User).where(func.lower(User.email) == payload.email.lower(), User.active.is_(True)))
+    account = payload.email.strip().lower()
+    user = db.scalar(select(User).where(func.lower(User.email) == account, User.active.is_(True)))
     if not user or not verify_password(payload.password, user.password_hash):
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="邮箱或密码错误")
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="账号或密码错误")
     response.set_cookie("access_token", create_access_token(user), httponly=True, secure=settings.cookie_secure, samesite="strict", max_age=settings.access_token_minutes * 60, path="/")
     add_audit_event(db, actor=user, action="登录", object_type="User", object_id=str(user.id), detail="用户登录平台", dealer_id=user.dealer_id, ip_address=_client_ip(request))
     db.commit()

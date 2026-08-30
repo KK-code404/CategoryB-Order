@@ -56,7 +56,7 @@ export function DashboardPage({ user }: Props) {
     { title: '客户', dataIndex: 'dealer_name', width: 130, ellipsis: true },
     { title: '申请日期', dataIndex: 'received_at', width: 132, render: value => formatChinaDateTime(value).slice(0, 16) },
     { title: '订单号', dataIndex: 'order_no', width: 100 },
-    { title: '零件号', dataIndex: 'part_no', width: 92, render: value => value || '—' },
+    { title: '零件号', dataIndex: 'part_no', width: 92, render: value => value || '-' },
     { title: '申请数量', dataIndex: 'quantity', width: 82, align: 'right' },
     { title: '匹配状态', dataIndex: 'status', width: 92, render: value => <StatusTag status={value} /> },
     { title: '操作', width: 64, fixed: 'right', render: (_, line) => <Button type="link" size="small" onClick={() => setSelectedId(line.id)}>查看</Button> },
@@ -106,12 +106,25 @@ export function DashboardPage({ user }: Props) {
 
   return (
     <div className="dashboard-page">
-      <section className="stat-strip" aria-label="今日核销概览">
-        <div className="stat-item"><MailOutlined className="stat-icon blue" /><div><span>待处理邮件</span><strong>{stats?.pending_emails ?? 0}</strong><small>等待销售确认</small></div></div>
-        <div className="stat-item"><WarningOutlined className="stat-icon amber" /><div><span>匹配异常</span><strong>{stats?.match_exceptions ?? 0}</strong><small>需要人工修正</small></div></div>
-        <div className="stat-item"><CheckCircleOutlined className="stat-icon green" /><div><span>今日已核销</span><strong>{stats?.reconciled_today ?? 0}</strong><small>条发货明细</small></div></div>
-        <div className="stat-item"><DatabaseOutlined className="stat-icon blue" /><div><span>待发库存（可用）</span><strong>{(stats?.remaining_stock ?? 0).toLocaleString()}</strong><small>{stats?.material_count ?? 0} 个物料</small></div></div>
-      </section>
+      <div className="dashboard-heading">
+        <Typography.Title level={4}>工作台</Typography.Title>
+        <Typography.Text type="secondary">发货申请、订单匹配与核销进度概览</Typography.Text>
+      </div>
+      <div className="dashboard-summary-row">
+        <section className="stat-strip" aria-label="今日核销概览">
+          <div className="stat-item"><MailOutlined className="stat-icon blue" /><div><span>待处理邮件</span><strong>{stats?.pending_emails ?? 0}</strong><small>等待销售确认</small></div></div>
+          <div className="stat-item"><WarningOutlined className="stat-icon amber" /><div><span>匹配异常</span><strong>{stats?.match_exceptions ?? 0}</strong><small>需要人工修正</small></div></div>
+          <div className="stat-item"><CheckCircleOutlined className="stat-icon green" /><div><span>今日已核销</span><strong>{stats?.reconciled_today ?? 0}</strong><small>条发货明细</small></div></div>
+          <div className="stat-item"><DatabaseOutlined className="stat-icon blue" /><div><span>待发库存（可用）</span><strong>{(stats?.remaining_stock ?? 0).toLocaleString()}</strong><small>{stats?.material_count ?? 0} 个物料</small></div></div>
+        </section>
+        <aside className="dashboard-welcome" aria-label="今日工作提示">
+          <div className="dashboard-welcome-copy">
+            <h2>早安，{user.display_name}</h2>
+            <p>当前有 {stats?.pending_emails ?? 0} 封邮件和 {stats?.match_exceptions ?? 0} 条匹配异常待处理。</p>
+          </div>
+          <img src="/images/dashboard-team.webp" alt="团队成员协作处理订单与发货" />
+        </aside>
+      </div>
 
       <section className="workspace-grid">
         <div className="workspace-list surface">
@@ -139,7 +152,7 @@ export function DashboardPage({ user }: Props) {
           {selected ? <>
             <div className="section-heading"><Typography.Title level={5}>申请详情 <small>{selected.request_no}</small></Typography.Title><StatusTag status={selected.status} /></div>
             <h3>邮件摘要</h3>
-            <Descriptions size="small" column={2} colon={false} items={[
+            <Descriptions size="small" column={1} colon={false} items={[
               { key: 'email', label: '来源邮箱', children: selected.sender_email },
               { key: 'date', label: '期望发货日', children: selected.requested_ship_date },
               { key: 'dealer', label: '客户', children: selected.dealer_name },
@@ -149,13 +162,13 @@ export function DashboardPage({ user }: Props) {
             <h3>申请明细 <small>（系统解析结果，可编辑）</small></h3>
             <div className="detail-line"><div><span>零件号</span><strong>{selected.part_no || '待匹配'}</strong></div><div className="grow"><span>品名</span><strong>{selected.product_name}</strong></div><div><span>申请数量</span><strong>{selected.quantity}</strong></div></div>
             <h3>匹配结果 <small>（以订单台账为准）</small></h3>
-            <Descriptions bordered size="small" column={3} items={[
+            <Descriptions bordered size="small" column={{ xs: 1, sm: 2 }} items={[
               { key: 'order', label: '订单号', children: selected.order_no },
-              { key: 'ordered', label: '订单数量', children: selected.ordered_qty ?? '—' },
-              { key: 'reconciled', label: '已核销量', children: selected.reconciled_qty ?? '—' },
-              { key: 'remaining', label: '核销前余额', children: <span className="text-success">{balanceBefore ?? '—'}</span> },
+              { key: 'ordered', label: '订单数量', children: selected.ordered_qty ?? '-' },
+              { key: 'reconciled', label: '已核销量', children: selected.reconciled_qty ?? '-' },
+              { key: 'remaining', label: '核销前余额', children: <span className="text-success">{balanceBefore ?? '-'}</span> },
               { key: 'current', label: '本次申请', children: selected.quantity },
-              { key: 'after', label: '核销后余额', children: balanceAfter ?? '—' },
+              { key: 'after', label: '核销后余额', children: balanceAfter ?? '-' },
             ]} />
             <div className={`match-message ${selected.status === 'EXCEPTION' ? 'error' : 'success'}`}>
               {selected.status === 'EXCEPTION' ? selected.exception_reason : selected.status === 'RECONCILED' ? '核销完成：供应商发货指令已进入发送队列。' : selected.status === 'REVERSED' ? '该明细已冲销，订单余额已恢复。' : '匹配成功：申请数量未超过剩余未发数量，可核销。'}

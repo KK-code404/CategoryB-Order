@@ -25,6 +25,7 @@ export function AppShell({ user, onLogout }: Props) {
   const { message } = App.useApp()
   const [active, setActive] = useState('dashboard')
   const [collapsed, setCollapsed] = useState(false)
+  const [mobile, setMobile] = useState(false)
 
   const items = [
     { key: 'dashboard', icon: <DashboardOutlined />, label: '工作台' },
@@ -42,21 +43,44 @@ export function AppShell({ user, onLogout }: Props) {
 
   return (
     <Layout className="app-shell">
-      <Header className="app-header">
-        <div className="header-brand"><span className="header-drop">滴</span><strong>油品发货核销平台</strong></div>
-        <Space size={12}>
-          <Avatar size="small">{user.display_name.slice(0, 1)}</Avatar>
-          <Typography.Text className="header-user">{user.display_name}（{user.role === 'DEALER' ? '代理商' : '销售运营'}）</Typography.Text>
-          <Button type="text" className="header-action" icon={<LogoutOutlined />} aria-label="退出" onClick={handleLogout}>退出</Button>
-        </Space>
-      </Header>
-      <Layout>
-        <Sider className="app-sider" width={156} collapsedWidth={64} collapsible collapsed={collapsed} trigger={null} breakpoint="lg" onBreakpoint={setCollapsed}>
-          <Menu theme="dark" mode="inline" selectedKeys={[active]} items={items} onClick={({ key }) => setActive(key)} />
-          <Button className="sider-toggle" type="text" icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />} onClick={() => setCollapsed(value => !value)}>
-            {collapsed ? null : '收起菜单'}
-          </Button>
-        </Sider>
+      {mobile && !collapsed ? <button className="sider-backdrop" aria-label="关闭导航菜单" onClick={() => setCollapsed(true)} /> : null}
+      <Sider
+        className={`app-sider${mobile ? ' is-mobile' : ''}`}
+        width={216}
+        collapsedWidth={mobile ? 0 : 72}
+        collapsible
+        collapsed={collapsed}
+        trigger={null}
+        breakpoint="lg"
+        onBreakpoint={broken => { setMobile(broken); setCollapsed(broken) }}
+      >
+        <div className="sider-brand" aria-label="油品订单平台">
+          <span className="header-drop" aria-hidden="true">滴</span>
+          {collapsed ? null : <strong>油品订单平台</strong>}
+        </div>
+        <Menu mode="inline" selectedKeys={[active]} items={items} onClick={({ key }) => { setActive(key); if (mobile) setCollapsed(true) }} />
+        <Button className="sider-toggle" type="text" icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />} aria-label={collapsed ? '展开导航菜单' : '收起导航菜单'} onClick={() => setCollapsed(value => !value)}>
+          {collapsed ? null : '收起菜单'}
+        </Button>
+      </Sider>
+      <Layout className="app-main">
+        <Header className="app-header">
+          <Button
+            type="text"
+            className="mobile-menu-button"
+            icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
+            aria-label={collapsed ? '展开导航菜单' : '收起导航菜单'}
+            onClick={() => setCollapsed(value => !value)}
+          />
+          <Space size={12} className="header-profile">
+            <Avatar size="small">{user.display_name.slice(0, 1)}</Avatar>
+            <span className="header-identity">
+              <Typography.Text className="header-user">{user.display_name}</Typography.Text>
+              <Typography.Text className="header-role">{user.role === 'DEALER' ? '代理商' : '系统管理员'}</Typography.Text>
+            </span>
+            <Button type="text" className="header-action" icon={<LogoutOutlined />} aria-label="退出登录" onClick={handleLogout} />
+          </Space>
+        </Header>
         <Content className="app-content">
           {active === 'dashboard' ? <DashboardPage user={user} /> : <ResourcePage resource={active} user={user} />}
         </Content>

@@ -39,6 +39,14 @@ docker compose up -d --build
 docker compose ps
 ```
 
+部署完成后可先通过 `http://虚拟机地址:5175` 在局域网内直连验证；域名入口为 `https://oilorder.kkhub.com.cn`，继续使用标准 HTTPS 端口 443。
+
+若虚拟机已经通过 Cloudflare Tunnel 将域名转发到 `http://localhost:5175`，只启动业务容器即可，Caddy 服务无需启动：
+
+```bash
+docker compose up -d --build db redis api worker beat frontend
+```
+
 Caddy 会根据 `DOMAIN` 自动申请和续期 HTTPS 证书。请确保：
 
 - 域名 A/AAAA 记录指向旧电脑所在网络的公网地址；

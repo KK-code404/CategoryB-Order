@@ -30,7 +30,7 @@ export function AdminSettingsPage({ user }: Props) {
 
   useEffect(() => { void load() }, [load])
 
-  // CHANGE [2026-08-30 12:58 +08:00] [WH400]: 拦截默认直传并改为平台“预览校验—人工确认”两阶段导入。
+  // CHANGE [2026-08-30 12:58 +08:00] [WH400]: 拦截默认直传并改为平台“预览校验-人工确认”两阶段导入。
   const uploadProps: UploadProps = useMemo(() => ({
     accept: '.xlsx', maxCount: 1, showUploadList: false,
     beforeUpload(file) {
@@ -69,10 +69,10 @@ export function AdminSettingsPage({ user }: Props) {
   }
 
   const tableItems = [
-    { key: 'materials', label: `物料映射（${config?.materials.length ?? 0}）`, children: <Table rowKey="id" size="small" loading={loading} dataSource={config?.materials ?? []} columns={[{ title: '物料号', dataIndex: 'material_no' }, { title: '零件号', dataIndex: 'part_no' }, { title: '品名', dataIndex: 'product_name', ellipsis: true }, { title: '品牌', dataIndex: 'brand_code' }, { title: '供应商', dataIndex: 'supplier_code' }]} pagination={false} /> },
-    { key: 'dealers', label: `代理商（${config?.dealers.length ?? 0}）`, children: <Table rowKey="id" size="small" loading={loading} dataSource={config?.dealers ?? []} columns={[{ title: '编码', dataIndex: 'code' }, { title: '名称', dataIndex: 'name' }, { title: '发件邮箱', dataIndex: 'email' }]} pagination={false} /> },
-    { key: 'suppliers', label: `供应商（${config?.suppliers.length ?? 0}）`, children: <Table rowKey="id" size="small" loading={loading} dataSource={config?.suppliers ?? []} columns={[{ title: '编码', dataIndex: 'code' }, { title: '名称', dataIndex: 'name' }, { title: '收件邮箱', dataIndex: 'email' }]} pagination={false} /> },
-    { key: 'users', label: `用户（${config?.users.length ?? 0}）`, children: <Table rowKey="id" size="small" loading={loading} dataSource={config?.users ?? []} columns={[{ title: '姓名', dataIndex: 'display_name' }, { title: '邮箱', dataIndex: 'email' }, { title: '角色', dataIndex: 'role' }, { title: '代理商', dataIndex: 'dealer_code', render: value => value || '—' }]} pagination={false} /> },
+    { key: 'materials', label: `物料映射（${config?.materials.length ?? 0}）`, children: <Table rowKey="id" size="small" loading={loading} dataSource={config?.materials ?? []} columns={[{ title: '物料号', dataIndex: 'material_no' }, { title: '零件号', dataIndex: 'part_no' }, { title: '品名', dataIndex: 'product_name', ellipsis: true }, { title: '品牌', dataIndex: 'brand_code' }, { title: '供应商', dataIndex: 'supplier_code' }]} pagination={false} scroll={{ x: 720 }} /> },
+    { key: 'dealers', label: `代理商（${config?.dealers.length ?? 0}）`, children: <Table rowKey="id" size="small" loading={loading} dataSource={config?.dealers ?? []} columns={[{ title: '编码', dataIndex: 'code' }, { title: '名称', dataIndex: 'name' }, { title: '发件邮箱', dataIndex: 'email' }]} pagination={false} scroll={{ x: 560 }} /> },
+    { key: 'suppliers', label: `供应商（${config?.suppliers.length ?? 0}）`, children: <Table rowKey="id" size="small" loading={loading} dataSource={config?.suppliers ?? []} columns={[{ title: '编码', dataIndex: 'code' }, { title: '名称', dataIndex: 'name' }, { title: '收件邮箱', dataIndex: 'email' }]} pagination={false} scroll={{ x: 560 }} /> },
+    { key: 'users', label: `用户（${config?.users.length ?? 0}）`, children: <Table rowKey="id" size="small" loading={loading} dataSource={config?.users ?? []} columns={[{ title: '姓名', dataIndex: 'display_name' }, { title: '邮箱', dataIndex: 'email' }, { title: '角色', dataIndex: 'role' }, { title: '代理商', dataIndex: 'dealer_code', render: value => value || '-' }]} pagination={false} scroll={{ x: 640 }} /> },
   ]
 
   return <div className="resource-page">
