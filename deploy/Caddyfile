@@ -1,0 +1,20 @@
+# CHANGE [2026-08-30 12:58 +08:00] [WH400]: 通过用户已申请域名自动启用 HTTPS，并将网页和 API 路由到对应容器。
+{$DOMAIN} {
+  encode zstd gzip
+
+  handle /api/* {
+    reverse_proxy api:8000
+  }
+
+  handle {
+    reverse_proxy frontend:80
+  }
+
+  header {
+    Strict-Transport-Security "max-age=31536000; includeSubDomains"
+    X-Content-Type-Options "nosniff"
+    X-Frame-Options "DENY"
+    Referrer-Policy "strict-origin-when-cross-origin"
+  }
+}
+

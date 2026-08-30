@@ -1,0 +1,20 @@
+# CHANGE [2026-08-30 12:58 +08:00] [WH400]: 排除本地依赖、构建产物、运行数据与敏感环境配置，避免误提交。
+node_modules/
+dist/
+*.tsbuildinfo
+frontend/vite.config.js
+frontend/vite.config.d.ts
+work/
+.vite/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.venv/
+.env
+storage/
+backups/
+*.db
+*.sqlite3
+frontend/coverage/
+backend/htmlcov/

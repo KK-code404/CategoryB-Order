@@ -1,0 +1,15 @@
+# CHANGE [2026-08-30 12:58 +08:00] [WH400]: Declare API, database, Excel, task queue, and security dependencies using ASCII for Windows pip compatibility.
+fastapi>=0.115,<1
+uvicorn[standard]>=0.34,<1
+sqlalchemy>=2.0,<3
+alembic>=1.14,<2
+psycopg[binary]>=3.2,<4
+pydantic-settings>=2.7,<3
+python-multipart>=0.0.20,<1
+argon2-cffi>=23.1,<26
+PyJWT>=2.10,<3
+openpyxl>=3.1,<4
+celery[redis]>=5.4,<6
+httpx>=0.28,<1
+email-validator>=2.2,<3
+pytest>=8.3,<9
