@@ -46,6 +46,36 @@ export interface ShipmentLine {
   supplier_name: string | null
 }
 
+export interface ShipmentRequest {
+  id: number
+  request_no: string
+  sender_email: string
+  dealer_name: string
+  subject: string
+  batch_no: string
+  attachment_name: string
+  received_at: string
+  line_count: number
+  pending_count: number
+  exception_count: number
+  reconciled_count: number
+  reversed_count: number
+}
+
+export type MailStatus = 'PENDING' | 'SENT' | 'FAILED'
+
+export interface OutboundMail {
+  id: number
+  kind: string
+  recipient: string
+  subject: string
+  status: MailStatus
+  attempts: number
+  last_error: string | null
+  sent_at: string | null
+  created_at: string
+}
+
 export interface OrderLine {
   id: number
   dealer_name: string

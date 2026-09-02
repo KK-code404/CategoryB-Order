@@ -1,4 +1,4 @@
-import type { AdminConfig, AuditEvent, DashboardPayload, OrderLine, ShipmentLine, User } from '../types'
+import type { AdminConfig, AuditEvent, DashboardPayload, OrderLine, OutboundMail, ShipmentLine, ShipmentRequest, User } from '../types'
 
 const API_BASE = import.meta.env.VITE_API_BASE || '/api'
 
@@ -10,8 +10,12 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     ...init,
   })
   if (!response.ok) {
-    const body = await response.json().catch(() => ({ detail: '请求失败' }))
-    throw new Error(body.detail || `请求失败（${response.status}）`)
+    const body = await response.json().catch(() => ({ detail: '请求失败' })) as { detail?: string | Array<{ msg?: string; loc?: Array<string | number> }> }
+    const detail = Array.isArray(body.detail)
+      ? body.detail.map(item => `${item.loc?.at(-1) ?? '字段'}：${item.msg ?? '格式不正确'}`).join('；')
+      : body.detail
+    if (response.status === 401 && !['/auth/me', '/auth/login'].includes(path)) window.dispatchEvent(new Event('auth-expired'))
+    throw new Error(detail || `请求失败（${response.status}）`)
   }
   if (response.status === 204) return undefined as T
   return response.json() as Promise<T>
@@ -29,6 +33,8 @@ export const dataApi = {
   dashboard: () => request<DashboardPayload>('/dashboard'),
   orders: () => request<OrderLine[]>('/orders'),
   shipmentLines: () => request<ShipmentLine[]>('/shipment-lines'),
+  shipmentRequests: () => request<ShipmentRequest[]>('/shipment-requests'),
+  outboundMails: () => request<OutboundMail[]>('/outbound-mails'),
   auditEvents: () => request<AuditEvent[]>('/audit-events'),
   confirmLines: (lineIds: number[]) => request<{ confirmed: number; outbound_mails: number }>('/shipment-lines/confirm', { method: 'POST', body: JSON.stringify({ line_ids: lineIds }) }),
   updateLine: (lineId: number, values: Partial<ShipmentLine>) => request<ShipmentLine>(`/shipment-lines/${lineId}`, { method: 'PATCH', body: JSON.stringify(values) }),
@@ -45,4 +51,8 @@ export const dataApi = {
   createSupplier: (values: Record<string, unknown>) => request<{ id: number }>('/admin/suppliers', { method: 'POST', body: JSON.stringify(values) }),
   createMaterial: (values: Record<string, unknown>) => request<{ id: number }>('/admin/materials', { method: 'POST', body: JSON.stringify(values) }),
   createUser: (values: Record<string, unknown>) => request<{ id: number }>('/admin/users', { method: 'POST', body: JSON.stringify(values) }),
+  updateDealer: (id: number, values: Record<string, unknown>) => request<{ id: number }>(`/admin/dealers/${id}`, { method: 'PATCH', body: JSON.stringify(values) }),
+  updateSupplier: (id: number, values: Record<string, unknown>) => request<{ id: number }>(`/admin/suppliers/${id}`, { method: 'PATCH', body: JSON.stringify(values) }),
+  updateMaterial: (id: number, values: Record<string, unknown>) => request<{ id: number }>(`/admin/materials/${id}`, { method: 'PATCH', body: JSON.stringify(values) }),
+  updateUser: (id: number, values: Record<string, unknown>) => request<{ id: number }>(`/admin/users/${id}`, { method: 'PATCH', body: JSON.stringify(values) }),
 }

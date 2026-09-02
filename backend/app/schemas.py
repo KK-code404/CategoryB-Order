@@ -3,7 +3,7 @@ from decimal import Decimal
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_serializer
 
-from .models import ShipmentStatus, UserRole
+from .models import MailStatus, ShipmentStatus, UserRole
 
 
 # CHANGE [2026-08-30 18:05 +08:00] [WH400]: 登录标识同时兼容简短账号和既有邮箱账号。
@@ -67,6 +67,47 @@ class ShipmentLineOut(BaseModel):
     # CHANGE [2026-08-30 12:58 +08:00] [WH400]: 为 SQLite 丢失时区的时间补回 UTC 标记，保证前端可正确转换上海时间。
     @field_serializer("received_at")
     def serialize_received_at(self, value: datetime) -> str:
+        normalized = value.replace(tzinfo=timezone.utc) if value.tzinfo is None else value
+        return normalized.isoformat()
+
+
+class ShipmentRequestOut(BaseModel):
+    id: int
+    request_no: str
+    sender_email: str
+    dealer_name: str
+    subject: str
+    batch_no: str
+    attachment_name: str
+    received_at: datetime
+    line_count: int
+    pending_count: int
+    exception_count: int
+    reconciled_count: int
+    reversed_count: int
+
+    @field_serializer("received_at")
+    def serialize_received_at(self, value: datetime) -> str:
+        normalized = value.replace(tzinfo=timezone.utc) if value.tzinfo is None else value
+        return normalized.isoformat()
+
+
+class OutboundMailOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    kind: str
+    recipient: str
+    subject: str
+    status: MailStatus
+    attempts: int
+    last_error: str | None
+    sent_at: datetime | None
+    created_at: datetime
+
+    @field_serializer("sent_at", "created_at")
+    def serialize_mail_time(self, value: datetime | None) -> str | None:
+        if value is None:
+            return None
         normalized = value.replace(tzinfo=timezone.utc) if value.tzinfo is None else value
         return normalized.isoformat()
 
@@ -135,11 +176,25 @@ class DealerCreate(BaseModel):
     email: EmailStr
 
 
+class DealerUpdate(BaseModel):
+    code: str | None = Field(default=None, min_length=2, max_length=50)
+    name: str | None = Field(default=None, min_length=2, max_length=120)
+    email: EmailStr | None = None
+    active: bool | None = None
+
+
 # CHANGE [2026-08-30 12:58 +08:00] [WH400]: 校验供应商路由目标，避免缺少收件邮箱的配置进入发送队列。
 class SupplierCreate(BaseModel):
     code: str = Field(min_length=2, max_length=50)
     name: str = Field(min_length=2, max_length=120)
     email: EmailStr
+
+
+class SupplierUpdate(BaseModel):
+    code: str | None = Field(default=None, min_length=2, max_length=50)
+    name: str | None = Field(default=None, min_length=2, max_length=120)
+    email: EmailStr | None = None
+    active: bool | None = None
 
 
 # CHANGE [2026-08-30 12:58 +08:00] [WH400]: 校验物料到零件与供应商的显式映射输入。
@@ -151,10 +206,27 @@ class MaterialMappingCreate(BaseModel):
     supplier_code: str = Field(min_length=2, max_length=50)
 
 
+class MaterialMappingUpdate(BaseModel):
+    material_no: str | None = Field(default=None, min_length=2, max_length=80)
+    part_no: str | None = Field(default=None, min_length=2, max_length=80)
+    product_name: str | None = Field(default=None, min_length=2, max_length=255)
+    brand_code: str | None = Field(default=None, min_length=2, max_length=50)
+    supplier_code: str | None = Field(default=None, min_length=2, max_length=50)
+
+
 # CHANGE [2026-08-30 12:58 +08:00] [WH400]: 校验新用户角色与初始密码，代理商账号需由服务端绑定客户范围。
 class UserCreate(BaseModel):
-    email: EmailStr
+    email: str = Field(min_length=3, max_length=255)
     display_name: str = Field(min_length=2, max_length=80)
     password: str = Field(min_length=10, max_length=128)
     role: UserRole
     dealer_code: str | None = Field(default=None, max_length=50)
+
+
+class UserUpdate(BaseModel):
+    email: str | None = Field(default=None, min_length=3, max_length=255)
+    display_name: str | None = Field(default=None, min_length=2, max_length=80)
+    password: str | None = Field(default=None, min_length=10, max_length=128)
+    role: UserRole | None = None
+    dealer_code: str | None = Field(default=None, max_length=50)
+    active: bool | None = None

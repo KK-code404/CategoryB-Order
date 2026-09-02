@@ -12,7 +12,28 @@ from sqlalchemy.orm import Session, joinedload
 from .config import settings
 from .db import get_db
 from .models import AuditEvent, Dealer, LedgerEntry, LedgerType, MailStatus, MaterialMapping, OutboundMail, SalesOrderLine, ShipmentLine, ShipmentRequest, ShipmentStatus, Supplier, User, UserRole
-from .schemas import AuditEventOut, ConfirmLinesRequest, DashboardOut, DealerCreate, ImportPreviewOut, LoginRequest, MaterialMappingCreate, OrderLineOut, ReverseRequest, ShipmentLineOut, ShipmentLineUpdate, SupplierCreate, UserCreate, UserOut
+from .schemas import (
+    AuditEventOut,
+    ConfirmLinesRequest,
+    DashboardOut,
+    DealerCreate,
+    DealerUpdate,
+    ImportPreviewOut,
+    LoginRequest,
+    MaterialMappingCreate,
+    MaterialMappingUpdate,
+    OrderLineOut,
+    OutboundMailOut,
+    ReverseRequest,
+    ShipmentLineOut,
+    ShipmentLineUpdate,
+    ShipmentRequestOut,
+    SupplierCreate,
+    SupplierUpdate,
+    UserCreate,
+    UserOut,
+    UserUpdate,
+)
 from .security import create_access_token, get_current_user, hash_password, require_roles, verify_password
 from .services.audit import add_audit_event
 from .services.excel_import import commit_order_import, preview_order_import
@@ -50,6 +71,27 @@ def _shipment_out(db: Session, line: ShipmentLine) -> ShipmentLineOut:
 def _shipment_query(user: User):
     query = select(ShipmentLine).join(ShipmentRequest).options(joinedload(ShipmentLine.request).joinedload(ShipmentRequest.dealer), joinedload(ShipmentLine.matched_order_line)).order_by(ShipmentRequest.received_at.desc(), ShipmentLine.id.desc())
     return query.where(ShipmentRequest.dealer_id == user.dealer_id) if user.role == UserRole.DEALER else query
+
+
+def _shipment_request_out(item: ShipmentRequest) -> ShipmentRequestOut:
+    counts = {status: 0 for status in ShipmentStatus}
+    for line in item.lines:
+        counts[line.status] += 1
+    return ShipmentRequestOut(
+        id=item.id,
+        request_no=item.request_no,
+        sender_email=item.sender_email,
+        dealer_name=item.dealer.name,
+        subject=item.subject,
+        batch_no=item.batch_no,
+        attachment_name=item.attachment_name,
+        received_at=item.received_at,
+        line_count=len(item.lines),
+        pending_count=counts[ShipmentStatus.PENDING],
+        exception_count=counts[ShipmentStatus.EXCEPTION],
+        reconciled_count=counts[ShipmentStatus.RECONCILED],
+        reversed_count=counts[ShipmentStatus.REVERSED],
+    )
 
 
 # CHANGE [2026-08-30 12:58 +08:00] [WH400]: 提供轻量健康检查用于反向代理和虚拟机监控。
@@ -120,6 +162,14 @@ def orders(db: Session = Depends(get_db), user: User = Depends(get_current_user)
 @router.get("/shipment-lines", response_model=list[ShipmentLineOut])
 def shipment_lines(db: Session = Depends(get_db), user: User = Depends(get_current_user)) -> list[ShipmentLineOut]:
     return [_shipment_out(db, line) for line in db.scalars(_shipment_query(user)).unique().all()]
+
+
+@router.get("/shipment-requests", response_model=list[ShipmentRequestOut])
+def shipment_requests(db: Session = Depends(get_db), user: User = Depends(get_current_user)) -> list[ShipmentRequestOut]:
+    query = select(ShipmentRequest).options(joinedload(ShipmentRequest.dealer), joinedload(ShipmentRequest.lines)).order_by(ShipmentRequest.received_at.desc())
+    if user.role == UserRole.DEALER:
+        query = query.where(ShipmentRequest.dealer_id == user.dealer_id)
+    return [_shipment_request_out(item) for item in db.scalars(query).unique().all()]
 
 
 # CHANGE [2026-08-30 12:58 +08:00] [WH400]: 允许代理商修改自身待处理行、销售修改任意待处理行，并在保存后重新匹配。
@@ -203,6 +253,11 @@ def retry_mail(mail_id: int, db: Session = Depends(get_db), user: User = Depends
     db.commit()
 
 
+@router.get("/outbound-mails", response_model=list[OutboundMailOut])
+def outbound_mails(db: Session = Depends(get_db), _: User = Depends(require_roles(UserRole.ADMIN, UserRole.SALES))) -> list[OutboundMail]:
+    return list(db.scalars(select(OutboundMail).order_by(OutboundMail.created_at.desc()).limit(500)).all())
+
+
 # CHANGE [2026-08-30 12:58 +08:00] [WH400]: 一次返回管理员配置清单，减少配置页多接口请求并便于核对路由关系。
 @router.get("/admin/config")
 def admin_config(db: Session = Depends(get_db), _: User = Depends(require_roles(UserRole.ADMIN))) -> dict:
@@ -228,12 +283,60 @@ def create_dealer(payload: DealerCreate, db: Session = Depends(get_db), user: Us
     return {"id": dealer.id}
 
 
+@router.patch("/admin/dealers/{dealer_id}")
+def update_dealer(dealer_id: int, payload: DealerUpdate, request: Request, db: Session = Depends(get_db), user: User = Depends(require_roles(UserRole.ADMIN))) -> dict[str, int]:
+    dealer = db.get(Dealer, dealer_id)
+    if not dealer:
+        raise HTTPException(status_code=404, detail="代理商不存在")
+    before = {field: str(getattr(dealer, field)) for field in payload.model_fields_set}
+    values = payload.model_dump(exclude_unset=True)
+    if "code" in values:
+        values["code"] = values["code"].strip().upper()
+    if "name" in values:
+        values["name"] = values["name"].strip()
+    if "email" in values:
+        values["email"] = str(values["email"]).lower()
+    for field, value in values.items():
+        setattr(dealer, field, value)
+    add_audit_event(db, actor=user, action="修改代理商", object_type="Dealer", object_id=str(dealer.id), detail=f"更新代理商 {dealer.code}", before=before, after=values, dealer_id=dealer.id, ip_address=_client_ip(request))
+    try:
+        db.commit()
+    except IntegrityError as exc:
+        db.rollback()
+        raise HTTPException(status_code=409, detail="代理商编码或邮箱已存在") from exc
+    return {"id": dealer.id}
+
+
 # CHANGE [2026-08-30 12:58 +08:00] [WH400]: 新增供应商收件路由并写入审计事件。
 @router.post("/admin/suppliers")
 def create_supplier(payload: SupplierCreate, db: Session = Depends(get_db), user: User = Depends(require_roles(UserRole.ADMIN))) -> dict[str, int]:
     supplier = Supplier(code=payload.code.strip().upper(), name=payload.name.strip(), email=payload.email.lower())
     db.add(supplier)
     add_audit_event(db, actor=user, action="新增供应商", object_type="Supplier", object_id=supplier.code, detail=f"创建供应商路由 {supplier.email}")
+    try:
+        db.commit()
+    except IntegrityError as exc:
+        db.rollback()
+        raise HTTPException(status_code=409, detail="供应商编码已存在") from exc
+    return {"id": supplier.id}
+
+
+@router.patch("/admin/suppliers/{supplier_id}")
+def update_supplier(supplier_id: int, payload: SupplierUpdate, request: Request, db: Session = Depends(get_db), user: User = Depends(require_roles(UserRole.ADMIN))) -> dict[str, int]:
+    supplier = db.get(Supplier, supplier_id)
+    if not supplier:
+        raise HTTPException(status_code=404, detail="供应商不存在")
+    before = {field: str(getattr(supplier, field)) for field in payload.model_fields_set}
+    values = payload.model_dump(exclude_unset=True)
+    if "code" in values:
+        values["code"] = values["code"].strip().upper()
+    if "name" in values:
+        values["name"] = values["name"].strip()
+    if "email" in values:
+        values["email"] = str(values["email"]).lower()
+    for field, value in values.items():
+        setattr(supplier, field, value)
+    add_audit_event(db, actor=user, action="修改供应商", object_type="Supplier", object_id=str(supplier.id), detail=f"更新供应商 {supplier.code}", before=before, after=values, ip_address=_client_ip(request))
     try:
         db.commit()
     except IntegrityError as exc:
@@ -251,6 +354,37 @@ def create_material(payload: MaterialMappingCreate, db: Session = Depends(get_db
     mapping = MaterialMapping(material_no=payload.material_no.strip().upper(), part_no=payload.part_no.strip().upper(), product_name=payload.product_name.strip(), brand_code=payload.brand_code.strip().upper(), supplier_id=supplier.id)
     db.add(mapping)
     add_audit_event(db, actor=user, action="新增物料映射", object_type="MaterialMapping", object_id=mapping.material_no, detail=f"映射至零件 {mapping.part_no} 和供应商 {supplier.code}")
+    try:
+        db.commit()
+    except IntegrityError as exc:
+        db.rollback()
+        raise HTTPException(status_code=409, detail="物料号已存在") from exc
+    return {"id": mapping.id}
+
+
+@router.patch("/admin/materials/{material_id}")
+def update_material(material_id: int, payload: MaterialMappingUpdate, request: Request, db: Session = Depends(get_db), user: User = Depends(require_roles(UserRole.ADMIN))) -> dict[str, int]:
+    mapping = db.get(MaterialMapping, material_id)
+    if not mapping:
+        raise HTTPException(status_code=404, detail="物料映射不存在")
+    values = payload.model_dump(exclude_unset=True)
+    supplier_code = values.pop("supplier_code", None)
+    before = {field: str(getattr(mapping, field)) for field in payload.model_fields_set if field != "supplier_code"}
+    before["supplier_code"] = mapping.supplier.code
+    if supplier_code is not None:
+        supplier = db.scalar(select(Supplier).where(Supplier.code == supplier_code.strip().upper(), Supplier.active.is_(True)))
+        if not supplier:
+            raise HTTPException(status_code=400, detail="供应商编码不存在或已停用")
+        mapping.supplier_id = supplier.id
+    for field in ("material_no", "part_no", "brand_code"):
+        if field in values:
+            values[field] = values[field].strip().upper()
+    if "product_name" in values:
+        values["product_name"] = values["product_name"].strip()
+    for field, value in values.items():
+        setattr(mapping, field, value)
+    after = {**values, "supplier_code": supplier_code.strip().upper() if supplier_code is not None else mapping.supplier.code}
+    add_audit_event(db, actor=user, action="修改物料映射", object_type="MaterialMapping", object_id=str(mapping.id), detail=f"更新物料 {mapping.material_no}", before=before, after=after, ip_address=_client_ip(request))
     try:
         db.commit()
     except IntegrityError as exc:
@@ -278,3 +412,44 @@ def create_user(payload: UserCreate, db: Session = Depends(get_db), actor: User 
         db.rollback()
         raise HTTPException(status_code=409, detail="用户邮箱已存在") from exc
     return {"id": user.id}
+
+
+@router.patch("/admin/users/{user_id}")
+def update_user(user_id: int, payload: UserUpdate, request: Request, db: Session = Depends(get_db), actor: User = Depends(require_roles(UserRole.ADMIN))) -> dict[str, int]:
+    target = db.scalar(select(User).options(joinedload(User.dealer)).where(User.id == user_id))
+    if not target:
+        raise HTTPException(status_code=404, detail="用户不存在")
+    values = payload.model_dump(exclude_unset=True)
+    if target.id == actor.id and (values.get("active") is False or (values.get("role") is not None and values["role"] != UserRole.ADMIN)):
+        raise HTTPException(status_code=409, detail="不能停用当前账号或移除自身管理员角色")
+
+    target_role = values.get("role", target.role)
+    dealer_code = values.pop("dealer_code", None)
+    if target_role == UserRole.DEALER:
+        dealer = target.dealer
+        if dealer_code is not None:
+            dealer = db.scalar(select(Dealer).where(Dealer.code == dealer_code.strip().upper(), Dealer.active.is_(True)))
+        if not dealer:
+            raise HTTPException(status_code=400, detail="代理商账号必须绑定有效代理商")
+        target.dealer_id = dealer.id
+    else:
+        target.dealer_id = None
+
+    before = {"email": target.email, "display_name": target.display_name, "role": target.role.value, "dealer_code": target.dealer.code if target.dealer else None, "active": target.active}
+    password = values.pop("password", None)
+    if "email" in values:
+        values["email"] = values["email"].strip().lower()
+    if "display_name" in values:
+        values["display_name"] = values["display_name"].strip()
+    for field, value in values.items():
+        setattr(target, field, value)
+    if password:
+        target.password_hash = hash_password(password)
+    after = {"email": target.email, "display_name": target.display_name, "role": target.role.value, "dealer_code": dealer_code, "active": target.active, "password_reset": bool(password)}
+    add_audit_event(db, actor=actor, action="修改用户", object_type="User", object_id=str(target.id), detail=f"更新账号 {target.email}", before=before, after=after, ip_address=_client_ip(request))
+    try:
+        db.commit()
+    except IntegrityError as exc:
+        db.rollback()
+        raise HTTPException(status_code=409, detail="用户账号已存在") from exc
+    return {"id": target.id}

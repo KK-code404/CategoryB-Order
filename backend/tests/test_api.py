@@ -99,3 +99,42 @@ def test_admin_master_data_permissions(client: TestClient):
     config = client.get("/api/admin/config").json()
     assert any(item["material_no"] == "NEW001X" for item in config["materials"])
     assert any(item["email"] == "new-dealer-user@example.com" for item in config["users"])
+
+
+def test_mailbox_views_and_manual_retry(sales_client: TestClient):
+    requests = sales_client.get("/api/shipment-requests")
+    assert requests.status_code == 200
+    assert requests.json()[0]["line_count"] >= 1
+    line = next(item for item in sales_client.get("/api/shipment-lines").json() if item["status"] == "PENDING")
+    assert sales_client.post("/api/shipment-lines/confirm", json={"line_ids": [line["id"]]}).status_code == 200
+    outbound = sales_client.get("/api/outbound-mails")
+    assert outbound.status_code == 200
+    mail = outbound.json()[0]
+    assert mail["status"] == "PENDING"
+    assert sales_client.post(f"/api/outbound-mails/{mail['id']}/retry").status_code == 204
+
+
+def test_admin_can_update_master_data_and_reset_user_password(client: TestClient):
+    assert client.post("/api/auth/login", json={"email": "admin@example.com", "password": "Demo123!"}).status_code == 200
+    config = client.get("/api/admin/config").json()
+    dealer = config["dealers"][0]
+    supplier = config["suppliers"][0]
+    material = config["materials"][0]
+    assert client.patch(f"/api/admin/dealers/{dealer['id']}", json={"name": "更新后的代理商"}).status_code == 200
+    assert client.patch(f"/api/admin/suppliers/{supplier['id']}", json={"email": "route-updated@example.com"}).status_code == 200
+    assert client.patch(f"/api/admin/materials/{material['id']}", json={"product_name": "更新后的测试油品"}).status_code == 200
+
+    created = client.post("/api/admin/users", json={"email": "operator", "display_name": "测试操作员", "password": "StrongPass123!", "role": "SALES"})
+    assert created.status_code == 200
+    user_id = created.json()["id"]
+    updated = client.patch(f"/api/admin/users/{user_id}", json={"display_name": "更新操作员", "password": "UpdatedPass123!", "active": True})
+    assert updated.status_code == 200
+    client.post("/api/auth/logout")
+    assert client.post("/api/auth/login", json={"email": "operator", "password": "UpdatedPass123!"}).status_code == 200
+
+
+def test_admin_cannot_disable_current_account(client: TestClient):
+    login = client.post("/api/auth/login", json={"email": "admin@example.com", "password": "Demo123!"})
+    admin_id = login.json()["id"]
+    response = client.patch(f"/api/admin/users/{admin_id}", json={"active": False})
+    assert response.status_code == 409
