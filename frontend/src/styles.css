@@ -119,6 +119,103 @@ button, input, textarea, select { font: inherit; }
 .section-heading small, .request-detail h3 small { color: var(--text-muted); font-weight: 400; }
 .filter-row { margin: var(--space-3) 0 var(--space-4); width: 100%; }
 .filter-row .ant-input-search { max-width: 280px; }
+/* CHANGE [2026-09-03 08:56 +08:00] [WH400]: 用独立流布局和底部留白抵消筛选组件换行负边距，保持表头与控件清晰分隔。 */
+.dashboard-filter-bar { display: flow-root; padding-bottom: var(--space-5); }
+
+/* CHANGE [2026-09-03 09:01 +08:00] [WH400]: 日历台账保留 Excel 的绿色日期与黄色余额，固定订单标识并使用独立滚动容器避免挤压页面。 */
+.order-view-tabs { display: flex; gap: 8px; margin-bottom: 16px; }
+.daily-ledger { padding: 20px; }
+.daily-ledger-heading { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.daily-ledger-heading h3 { margin: 0 0 4px; font-size: 17px; }
+.daily-ledger-heading p, .daily-ledger-basis { margin: 0; color: var(--text-secondary); font-size: 12px; line-height: 1.7; }
+.daily-ledger-filters { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin: 20px 0 14px; }
+.daily-month-controls { display: flex; gap: 6px; }
+.daily-month-controls .ant-picker { width: 156px; }
+.daily-ledger-filters > .ant-select { min-width: 180px; }
+.daily-ledger-filters > .ant-input-search { width: 240px; }
+.daily-date-toggle { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--text-secondary); }
+.daily-ledger-warning { margin-top: 12px; }
+.daily-ledger-caption { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; margin: 20px 0 12px; }
+.daily-ledger-caption span { color: var(--text-muted); font-size: 12px; }
+.daily-grid-scroll { max-height: 60vh; overflow: auto; border: 1px solid #d9ded6; border-radius: 6px; }
+.daily-grid { border-collapse: separate; border-spacing: 0; width: max-content; min-width: 100%; font-variant-numeric: tabular-nums; }
+.daily-grid th, .daily-grid td { padding: 10px 12px; min-width: 88px; height: 54px; border-right: 1px solid #e1e5df; border-bottom: 1px solid #e1e5df; text-align: right; white-space: nowrap; background: #fff; }
+.daily-grid thead th { position: sticky; top: 0; z-index: 2; background: #f3f5f1; text-align: center; font-size: 12px; }
+.daily-grid .daily-fixed-order { position: sticky; left: 0; min-width: 144px; max-width: 144px; width: 144px; z-index: 1; text-align: left; }
+.daily-grid .daily-fixed-part { position: sticky; left: 144px; min-width: 112px; max-width: 112px; width: 112px; z-index: 1; text-align: left; }
+.daily-grid .daily-fixed-ordered { position: sticky; left: 256px; min-width: 100px; width: 100px; z-index: 1; }
+.daily-grid .daily-fixed-remaining { position: sticky; left: 356px; min-width: 112px; width: 112px; z-index: 1; background: #fff7ce; font-weight: 650; border-right: 2px solid #d6cfaa; }
+.daily-grid thead [class^='daily-fixed-'] { z-index: 3; }
+.daily-grid thead .daily-fixed-remaining { background: #fff09c; }
+.daily-grid .daily-date-header { background: #dff0cd; color: #345a20; min-width: 92px; }
+.daily-date-header span, .daily-date-header strong { display: block; line-height: 1.6; }
+.daily-date-header strong { font-size: 14px; }
+.daily-grid .daily-fixed-order small { display: block; font-weight: 400; color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; font-size: 10px; }
+.daily-grid .daily-month-total { background: #f0edff; font-weight: 650; }
+.daily-grid .daily-has-quantity { background: #edf7e5; color: #31681c; font-weight: 650; }
+.daily-grid .daily-undated { color: #9b6800; }
+.daily-grid tbody tr:hover td, .daily-grid tbody tr:hover th { box-shadow: inset 0 2px #c4bee8, inset 0 -2px #c4bee8; }
+.daily-grid tfoot td, .daily-grid tfoot th { font-weight: 650; background: #f4f5f1; }
+.daily-order-tabs { display: flex; gap: 4px; overflow-x: auto; padding-top: 12px; }
+.daily-order-tabs button { flex: 0 0 auto; border: 1px solid #e3e5df; border-bottom: 3px solid transparent; border-radius: 4px 4px 0 0; background: #f4f5f1; padding: 10px 14px; cursor: pointer; color: var(--text-secondary); }
+.daily-order-tabs button[aria-selected='true'] { border-bottom-color: #578d37; color: #31581b; background: #e4f2d6; font-weight: 650; }
+.daily-loading-placeholder { min-height: 180px; display: grid; place-items: center; color: var(--text-muted); }
+.daily-visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+/* CHANGE [2026-09-03 09:01 +08:00] [WH400]: 窄屏只固定订单和零件两列，确保日期区域仍可滚动查看，不让四个冻结列占满屏幕。 */
+@media (max-width: 768px) {
+  .daily-ledger { padding: 12px; }
+  .daily-ledger-filters > .ant-select, .daily-ledger-filters > .ant-input-search { width: 100%; }
+  .daily-grid .daily-fixed-ordered, .daily-grid .daily-fixed-remaining { position: static; }
+  .daily-grid .daily-fixed-order { width: 120px; min-width: 120px; max-width: 120px; }
+  .daily-grid .daily-fixed-part { left: 120px; width: 96px; min-width: 96px; max-width: 96px; }
+}
+
+/* CHANGE [2026-09-03 10:38 +08:00] [WH400]: 驾驶舱沿用品牌颜色，以风险卡片和只读推演表建立清晰层次，窄屏仅表格内部滚动。 */
+.operations-page { display: grid; gap: 20px; min-width: 0; }
+.operations-page .order-view-tabs { margin: 0; flex-wrap: wrap; }
+.operations-page .order-view-tabs button { border: 1px solid var(--border); border-radius: 8px; padding: 10px 18px; background: white; color: var(--text); font: inherit; cursor: pointer; }
+.operations-page .order-view-tabs button.active { background: var(--brand-600); color: white; border-color: var(--brand-600); }
+.operations-heading, .operations-panel-title { display: flex; justify-content: space-between; align-items: center; gap: 16px; }
+.operations-heading { padding: 24px; background: linear-gradient(115deg, #eeecff, #f5faf9); border: 1px solid var(--border); border-radius: 14px; }
+.operations-heading h1 { margin: 8px 0; font-size: 28px; }
+.operations-heading p, .operations-panel p { color: var(--text-secondary); line-height: 1.7; }
+.operations-eyebrow { color: var(--brand-800); font-size: 12px; letter-spacing: 1px; font-weight: 600; }
+.operations-snapshot { margin: 0; color: var(--text-secondary); font-size: 12px; }
+.operations-metrics { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin-bottom: 20px; }
+.operations-metrics button { display: grid; gap: 8px; text-align: left; padding: 22px; border: 1px solid var(--border); border-radius: 12px; background: white; color: var(--text); cursor: pointer; }
+.operations-metrics button[aria-pressed="true"] { border-color: var(--brand-600); background: var(--brand-050); }
+.operations-metrics button:disabled { opacity: .55; cursor: default; }
+.operations-metrics strong { font-size: 34px; color: var(--brand-800); }
+.operations-metrics small { color: var(--text-secondary); }
+.operations-panel { background: white; padding: 24px; border: 1px solid var(--border); border-radius: 12px; min-width: 0; }
+.operations-panel h2 { font-size: 18px; margin: 0; }
+.operations-risk { display: grid; grid-template-columns: 100px minmax(0, 1fr) auto; gap: 16px; align-items: center; padding: 18px 0; border-top: 1px solid var(--border); }
+.operations-risk strong { overflow-wrap: anywhere; }
+.operations-risk p { margin: 6px 0 0; }
+.operations-risk-label { font-size: 12px; padding: 6px 8px; background: var(--warning-soft); color: var(--warning); border-radius: 6px; text-align: center; }
+.operations-empty { padding: 32px 0; text-align: center; }
+.operations-search { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin: 20px 0; }
+.operations-page input { padding: 8px 12px; border: 1px solid var(--border); border-radius: 6px; min-width: 0; max-width: 100%; }
+.operations-page input:focus { outline: 2px solid var(--brand-600); outline-offset: 2px; }
+.operations-table-wrap { overflow: auto; margin-bottom: 20px; }
+.operations-table { width: 100%; min-width: 820px; border-collapse: collapse; }
+.operations-table th, .operations-table td { padding: 14px 12px; text-align: left; border-bottom: 1px solid var(--border); }
+.operations-table th { background: var(--surface-subtle); white-space: nowrap; }
+.operations-table input { width: 120px; }
+.operations-ok { color: var(--success-strong); }
+.operations-warning { color: #a23d15; }
+.operations-brief { white-space: pre-wrap; overflow-wrap: anywhere; font: inherit; line-height: 2; padding: 24px; background: var(--surface-subtle); border-left: 3px solid var(--brand-600); border-radius: 8px; }
+@media (max-width: 768px) {
+  .operations-heading, .operations-panel-title { align-items: flex-start; flex-direction: column; }
+  .operations-heading, .operations-panel { padding: 16px; }
+  .operations-metrics { gap: 8px; }
+  .operations-metrics button { padding: 12px 8px; }
+  .operations-metrics strong { font-size: 26px; }
+  .operations-risk { grid-template-columns: 1fr; gap: 10px; }
+  .operations-risk-label { justify-self: start; }
+  .operations-risk > button { justify-self: start; }
+  .operations-brief { padding: 12px; }
+}
 .selected-row > td { background: var(--brand-050) !important; box-shadow: inset 0 1px rgba(102, 92, 246, .14), inset 0 -1px rgba(102, 92, 246, .14); }
 .request-detail h3 { margin: var(--space-5) 0 10px; padding-top: var(--space-4); border-top: 1px solid var(--border-subtle); color: var(--text); font-size: 13px; line-height: 1.45; }
 .detail-line { display: grid; grid-template-columns: minmax(104px, .8fr) minmax(160px, 1.6fr) minmax(104px, .8fr); border: 1px solid var(--border); border-radius: var(--radius-control); overflow: hidden; }
@@ -229,239 +326,106 @@ button, input, textarea, select { font: inherit; }
   *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; }
 }
 
-/* Login surface: immersive blue-white 3D scene with a light, embedded sign-in area. */
-.login-page {
-  position: relative;
-  isolation: isolate;
-  min-height: 100dvh;
-  display: grid;
-  place-items: center;
-  padding: clamp(18px, 3vw, 36px);
-  overflow: auto;
-  color: #15213d;
-  background: #edf3fb;
-}
-.login-shell {
-  position: relative;
-  width: min(1480px, 100%);
-  height: min(820px, calc(100dvh - clamp(36px, 6vw, 72px)));
-  min-height: 600px;
-  display: grid;
-  grid-template-columns: minmax(0, 64fr) minmax(340px, 36fr);
-  overflow: hidden;
-  border-radius: 28px;
-  background: #f4f8ff;
-  box-shadow: 0 28px 70px rgba(53, 88, 145, .13);
-}
-.login-visual {
-  position: relative;
-  grid-column: 1 / -1;
-  grid-row: 1;
-  min-width: 0;
-  min-height: 600px;
-  overflow: hidden;
-  background: #f4f8ff;
-}
-.login-brand-mark {
-  width: 42px;
-  height: 42px;
-  flex: 0 0 auto;
-  align-self: center;
-  display: grid;
-  place-items: center;
-  border-radius: 10px;
-  color: #fff;
-  background: #1769ff;
-  box-shadow: 0 12px 28px rgba(23, 105, 255, .22);
-  font-size: 18px;
-  font-weight: 800;
-  font-style: normal;
-}
-.login-visual-image {
-  position: absolute;
-  z-index: 1;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  display: block;
-  object-fit: cover;
-  object-position: center;
-  image-rendering: auto;
-  user-select: none;
-  pointer-events: none;
-}
-.login-panel {
-  position: relative;
-  z-index: 4;
-  grid-column: 2;
-  grid-row: 1;
-  width: min(390px, calc(100% - 72px));
-  min-width: 280px;
-  align-self: center;
-  justify-self: center;
-  margin: 0;
-  padding: 34px 32px 30px;
-  display: flex;
-  flex-direction: column;
-  border: 1px solid rgba(255, 255, 255, .72);
-  border-radius: 16px;
-  background: rgba(246, 250, 255, .46);
-  box-shadow: 0 22px 54px rgba(43, 76, 132, .14), inset 0 1px 0 rgba(255, 255, 255, .78);
-  backdrop-filter: blur(24px) saturate(128%);
-  -webkit-backdrop-filter: blur(24px) saturate(128%);
-}
-.login-heading { margin: 18px 0 28px; text-align: center; }
-.login-panel h1 {
-  margin: 0;
-  color: #111b32;
-  font-size: 26px;
-  font-weight: 720;
-  letter-spacing: -.025em;
-  line-height: 1.2;
-}
-.login-heading p { margin: 9px 0 0; color: #667895; font-size: 12px; line-height: 1.6; }
-.login-form .ant-form-item { margin-bottom: 14px; }
-.login-form .ant-input-affix-wrapper {
-  min-height: 46px;
-  padding-inline: 14px;
-  border: 1px solid rgba(210, 221, 238, .86);
-  border-radius: 6px;
-  background: rgba(255, 255, 255, .76);
-  box-shadow: 0 8px 22px rgba(45, 77, 129, .05);
-}
-.login-form .ant-input-affix-wrapper:hover { border-color: #8db2f7; background: #fff; }
-.login-form .ant-input-affix-wrapper-focused {
-  border-color: #1769ff;
-  background: #fff;
-  box-shadow: 0 0 0 3px rgba(23, 105, 255, .12);
-}
-.login-form .ant-input-prefix {
-  width: auto;
-  height: auto;
-  margin-inline-end: 11px;
-  display: inline-flex;
-  color: #8290aa;
-  background: transparent;
-  font-size: 15px;
-}
-.login-form .ant-input,
-.login-form .ant-input-password-icon { color: #17233c; }
-.login-form .ant-input { caret-color: #1769ff; background: transparent; font-size: 14px; }
-.login-form .ant-input::placeholder { color: #65758f; }
-.login-submit.ant-btn {
-  width: 100%;
-  height: 48px;
-  margin-top: 10px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  border: 0;
-  border-radius: 6px;
-  color: #fff;
-  background: #1769ff;
-  box-shadow: 0 12px 28px rgba(23, 105, 255, .22);
-  font-size: 14px;
-  font-weight: 680;
-}
-.login-submit.ant-btn:not(:disabled):hover { color: #fff; background: #0d59df; transform: translateY(-1px); }
-.login-submit.ant-btn:not(:disabled):active { background: #0b4fc6; transform: translateY(1px); }
-.login-security-note {
-  margin-top: 18px;
-  padding-top: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  color: #526783;
-  font-size: 9px;
-  line-height: 1.5;
-}
-.login-security-note .anticon { color: #1769ff; font-size: 13px; }
+/* CHANGE [2026-09-03 13:03 +08:00] [WH400]: 还原参考图开放式左表单与右侧科技插画，不让卡片或玻璃遮罩改变原图的留白和色调。 */
+.login-page { min-height: 100dvh; padding: 0; background: #f0f3f8; color: #161d28; }
+.login-shell { position: relative; isolation: isolate; width: min(1920px, 100%); min-height: max(720px, 100dvh); margin: 0 auto; display: grid; grid-template-rows: 104px 1fr 84px; overflow: hidden; border-radius: 0 0 28px 28px; background: #fff; }
+.login-visual { position: absolute; inset: 0; z-index: -1; pointer-events: none; }
+.login-visual-image { width: 100%; height: 100%; display: block; object-fit: cover; object-position: center; user-select: none; }
+.login-brand { display: flex; align-items: center; gap: 10px; padding: 28px 3%; font-size: 26px; font-weight: 700; letter-spacing: -.5px; }
+.login-brand-mark { color: #0052d9; font-size: 44px; font-weight: 850; font-style: italic; line-height: 1; }
+.login-panel { width: 29%; max-width: 500px; min-width: 340px; margin: 0 0 0 5%; padding: 32px 0; align-self: center; }
+.login-heading { margin: 0 0 44px; text-align: left; }
+.login-panel h1 { margin: 0; color: #161d28; font-size: clamp(30px, 2.65vw, 48px); font-weight: 700; line-height: 1.5; letter-spacing: -.035em; }
+.login-panel h1 span { display: block; white-space: nowrap; }
+.login-heading p { color: #7a8290; font-size: clamp(14px, 1.15vw, 18px); line-height: 1.7; margin: 16px 0 0; }
+.login-form .ant-form-item { margin-bottom: 24px; }
+.login-form .ant-input-affix-wrapper { min-height: 50px; padding: 10px 14px; border: 1px solid #c7cbd2; border-radius: 4px; background: rgba(255,255,255,.94); box-shadow: none; font-size: 16px; }
+.login-form .ant-input-affix-wrapper:hover { border-color: #0052d9; }
+.login-form .ant-input-affix-wrapper-focused { border-color: #0052d9; box-shadow: 0 0 0 3px rgba(0,82,217,.12); }
+.login-form .ant-input-prefix { margin-inline-end: 12px; color: #8a929f; font-size: 18px; }
+.login-form .ant-input { color: #242b36; font-size: 16px; background: transparent; caret-color: #0052d9; }
+.login-form .ant-input::placeholder { color: #858d9a; }
+.login-form .ant-input-password-icon { color: #8a929f; font-size: 18px; }
+/* CHANGE [2026-09-03 13:03 +08:00] [WH400]: 保持眼睛图标的轻量外观，同时提供可辨识的键盘焦点。 */
+.login-form button.ant-input-password-icon { display: inline-flex; align-items: center; border: 0; padding: 3px; background: transparent; cursor: pointer; box-shadow: none; }
+.login-form button.ant-input-password-icon:focus-visible { outline: 2px solid #0052d9; outline-offset: 2px; }
+.login-form .ant-input-affix-wrapper-status-error { border-color: #c73a43; }
+.login-form .ant-form-item-explain-error { font-size: 13px; }
+.login-options { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin: 2px 0 32px; }
+.login-options .ant-checkbox-wrapper { color: #606b7b; font-size: 14px; }
+.login-text-button { appearance: none; padding: 0; border: 0; background: transparent; color: #0052d9; font: inherit; cursor: pointer; }
+.login-text-button:hover { color: #003eaa; text-decoration: underline; }
+.login-text-button:focus-visible { outline: 2px solid #0052d9; outline-offset: 4px; border-radius: 2px; }
+.login-submit.ant-btn { width: 100%; height: 52px; border: 0; border-radius: 4px; background: #0052d9; color: #fff; box-shadow: 0 4px 10px rgba(0,82,217,.08); font-size: 17px; font-weight: 500; letter-spacing: 4px; }
+.login-submit.ant-btn:not(:disabled):hover { color: #fff; background: #003eaa; }
+.login-submit.ant-btn:not(:disabled):active { background: #00358f; }
+.login-help-links { display: flex; align-items: center; gap: 20px; font-size: 14px; margin-top: 24px; }
+.login-help-links > span { color: #c6cbd3; }
+.login-copyright { position: relative; margin: 0; padding: 20px 5% 32px; color: #677180; font-size: 12px; align-self: end; }
 
-@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-  .login-panel { background: rgba(246, 250, 255, .94); }
+/* CHANGE [2026-09-03 13:03 +08:00] [WH400]: 手机优先保证表单可读并单列排版，低矮窗口允许滚动而不裁掉登录或帮助入口。 */
+@media (min-width: 1600px) {
+  .login-shell { grid-template-rows: 120px 1fr 144px; }
+  .login-panel { padding: 48px 0; }
+  .login-form .ant-input-affix-wrapper { min-height: 58px; font-size: 18px; }
+  .login-options, .login-options .ant-checkbox-wrapper, .login-help-links { font-size: 18px; }
+  .login-copyright { padding-bottom: 76px; font-size: 16px; }
+  .login-submit.ant-btn { height: 58px; }
+  .login-form .ant-form-item { margin-bottom: 28px; }
 }
-
-@media (prefers-reduced-transparency: reduce) {
-  .login-panel {
-    background: rgba(246, 250, 255, .96);
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
-  }
-}
-.login-copyright {
-  position: absolute;
-  z-index: 5;
-  right: 0;
-  bottom: 24px;
-  width: 36%;
-  margin: 0;
-  color: #71819a;
-  text-align: center;
-  font-size: 9px;
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  .login-shell { animation: login-shell-enter .62s cubic-bezier(.16, 1, .3, 1) both; }
-  .login-visual-image { animation: login-scene-enter .85s .08s cubic-bezier(.16, 1, .3, 1) both; }
-}
-
-@keyframes login-shell-enter {
-  from { opacity: 0; transform: translateY(18px) scale(.99); }
-  to { opacity: 1; transform: translateY(0) scale(1); }
-}
-
-@keyframes login-scene-enter {
-  from { opacity: .5; transform: scale(1.015); }
-  to { opacity: 1; transform: translate3d(0, 0, 0); }
-}
-
 @media (max-width: 1050px) {
-  .login-shell { grid-template-columns: minmax(0, 57fr) minmax(330px, 43fr); }
-  .login-panel { width: min(360px, calc(100% - 48px)); padding-inline: 28px; }
-  .login-copyright { width: 43%; }
+  .login-panel { width: 38%; min-width: 310px; }
+  .login-visual-image { object-position: 42% center; }
+  .login-panel h1 { font-size: 30px; }
 }
-
 @media (max-width: 680px) {
-  .login-page { display: block; padding: 0; overflow: auto; background: #edf3fb; }
-  .login-shell {
-    width: 100%;
-    height: 100dvh;
-    min-height: 680px;
-    grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: minmax(0, 1fr);
-    border-radius: 0;
-    box-shadow: none;
-  }
-  .login-visual { grid-column: 1; grid-row: 1; min-height: 680px; }
-  .login-visual-image { object-position: 37% center; }
-  .login-panel {
-    grid-column: 1;
-    grid-row: 1;
-    width: min(420px, calc(100% - 32px));
-    height: auto;
-    min-height: 0;
-    align-self: end;
-    justify-self: center;
-    margin-bottom: 24px;
-    padding: 32px 26px 28px;
-    background: rgba(246, 250, 255, .72);
-  }
-  .login-heading { margin: 16px 0 28px; }
-  .login-copyright { display: none; }
+  .login-shell { min-height: 100dvh; grid-template-rows: 92px 1fr auto; border-radius: 0; }
+  .login-brand { padding: 24px; font-size: 23px; }
+  .login-brand-mark { font-size: 38px; }
+  .login-visual { display: none; }
+  .login-panel { width: min(440px, calc(100% - 48px)); min-width: 0; max-width: none; margin: 0 auto; padding: 36px 0 48px; }
+  .login-panel h1 { font-size: clamp(25px, 6.5vw, 34px); }
+  .login-heading { margin-bottom: 36px; }
+  .login-heading p { font-size: 14px; }
+  .login-copyright { padding: 20px 24px 28px; font-size: 11px; }
 }
-
-@media (max-width: 520px) {
-  .login-panel { margin-bottom: 16px; padding: 30px 22px 26px; }
-  .login-heading { margin-bottom: 24px; }
-  .login-panel h1 { font-size: 25px; }
-  .login-form .ant-form-item { margin-bottom: 17px; }
+@media (prefers-reduced-motion: no-preference) {
+  .login-submit.ant-btn, .login-text-button, .login-form .ant-input-affix-wrapper { transition: background-color .18s, border-color .18s, box-shadow .18s, color .18s; }
 }
-
-@media (max-height: 720px) and (min-width: 681px) {
-  .login-page { place-items: start center; }
-  .login-shell { min-height: 560px; }
-  .login-visual { min-height: 560px; }
-  .login-copyright { display: none; }
+/* CHANGE [2026-09-03 16:32 +08:00] [WH400]: 对齐新参考图的全幅白底、左侧表单比例与油品插画，去掉多行标题后保持留白。 */
+.login-shell { width: 100%; border-radius: 0; }
+.login-brand { padding-left: 1.4%; }
+.login-panel { width: 26.8%; max-width: 550px; margin-left: 3.5%; }
+.login-panel h1 { white-space: nowrap; font-size: clamp(28px, 2.5vw, 52px); color: #101010; }
+.login-heading p { color: #707070; }
+.login-copyright { padding-left: 3.5%; }
+@media (min-width: 1600px) {
+  .login-form .ant-input-affix-wrapper { min-height: 64px; }
+  .login-form .ant-input { font-size: 20px; }
+  .login-submit.ant-btn { height: 64px; font-size: 20px; }
+}
+@media (max-width: 1050px) and (min-width: 681px) {
+  .login-panel { width: 38%; }
+  .login-panel h1 { font-size: 30px; }
+}
+@media (max-width: 680px) {
+  .login-brand { padding-left: 24px; }
+  .login-panel { width: min(440px, calc(100% - 48px)); margin: 0 auto; }
+  .login-panel h1 { font-size: clamp(24px, 6.5vw, 34px); }
+  .login-copyright { padding-left: 24px; }
+}
+/* CHANGE [2026-09-03 14:48 +08:00] [WH400]: 限制登录后插画尺寸，保留数据可读性，并为小屏提供独立排版。 */
+.module-title-art { display: flex; align-items: center; gap: 16px; }
+.module-title-art > div { min-width: 0; }
+.module-title-art > img { flex: 0 0 88px; object-fit: contain; pointer-events: none; }
+.dashboard-welcome img.dashboard-efficiency-art { right: 4px; bottom: 0; width: 48%; height: 100%; object-fit: contain; pointer-events: none; }
+.operations-illustrated > div { flex: 1; min-width: 0; }
+.operations-platform-art { flex: 0 0 144px; object-fit: contain; border-radius: 20px; pointer-events: none; }
+@media (max-width: 768px) {
+  .operations-illustrated { display: grid; grid-template-columns: minmax(0, 1fr) 96px; gap: 12px; }
+  .operations-platform-art { width: 96px; height: 96px; align-self: center; }
+  .operations-illustrated > .ant-btn { grid-column: 1 / -1; justify-self: start; max-width: 100%; }
+  .module-title-art { gap: 10px; }
+  .module-title-art > img { flex-basis: 64px; width: 64px; height: 60px; }
+  .dashboard-welcome img.dashboard-efficiency-art { width: 40%; }
 }

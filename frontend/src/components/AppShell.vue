@@ -29,6 +29,8 @@ import type { User } from '../types'
 import DashboardPage from '../pages/DashboardPage.vue'
 const ResourcePage = defineAsyncComponent(() => import('../pages/ResourcePage.vue'))
 const AdminSettingsPage = defineAsyncComponent(() => import('../pages/AdminSettingsPage.vue'))
+// CHANGE [2026-09-03 10:38 +08:00] [WH400]: 驾驶舱按需加载，避免增加原工作台首屏成本。
+const OperationsPage = defineAsyncComponent(() => import('../pages/OperationsPage.vue'))
 
 const props = defineProps<{ user: User }>()
 const emit = defineEmits<{ logout: [] }>()
@@ -40,6 +42,8 @@ const loggingOut = ref(false)
 const roleLabel = computed(() => ({ ADMIN: '系统管理员', SALES: '零件销售', DEALER: '代理商' })[props.user.role])
 const items = computed(() => [
   { key: 'dashboard', icon: DashboardOutlined, label: '工作台' },
+  // CHANGE [2026-09-03 10:38 +08:00] [WH400]: 为规则风险与只读模拟提供统一入口，各角色沿用服务端数据范围。
+  { key: 'operations', icon: DashboardOutlined, label: '业务驾驶舱' },
   { key: 'orders', icon: DatabaseOutlined, label: '订单台账' },
   { key: 'shipments', icon: SendOutlined, label: '发货申请' },
   { key: 'inbox', icon: MailOutlined, label: '邮件收件箱' },
@@ -121,6 +125,8 @@ async function logout() {
       </a-layout-header>
       <a-layout-content class="app-content">
         <DashboardPage v-if="active === 'dashboard'" :user="user" @navigate="navigate" />
+        <!-- CHANGE [2026-09-03 10:38 +08:00] [WH400]: 风险处理跳回既有业务流程，不在驾驶舱旁路核销权限。 -->
+        <OperationsPage v-else-if="active === 'operations'" :user="user" @navigate="navigate" />
         <AdminSettingsPage v-else-if="active === 'settings' && user.role === 'ADMIN'" :user="user" />
         <ResourcePage v-else :key="active" :resource="active" :user="user" />
       </a-layout-content>

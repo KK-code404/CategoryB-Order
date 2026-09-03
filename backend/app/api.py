@@ -39,6 +39,9 @@ from .services.audit import add_audit_event
 from .services.excel_import import commit_order_import, preview_order_import
 from .services.matching import match_shipment_line
 from .services.reconciliation import confirm_lines, reverse_line
+# CHANGE [2026-09-03 09:01 +08:00] [WH400]: 引入只读每日汇总，复用登录授权且不暴露收货人或地址。
+from .services.daily_shipments import daily_shipments
+from .schemas import DailyShipmentReport
 
 router = APIRouter(prefix=settings.api_prefix)
 
@@ -156,6 +159,12 @@ def orders(db: Session = Depends(get_db), user: User = Depends(get_current_user)
     if user.role == UserRole.DEALER:
         query = query.where(SalesOrderLine.dealer_id == user.dealer_id)
     return [OrderLineOut(id=item.id, dealer_name=item.dealer.name, order_no=item.order_no, part_no=item.part_no, material_no=item.material_no, product_name=item.product_name, ordered_qty=item.ordered_qty, reconciled_qty=item.reconciled_qty, remaining_qty=Decimal(item.ordered_qty) - Decimal(item.reconciled_qty), unit=item.unit, version=item.version) for item in db.scalars(query).unique().all()]
+
+
+# CHANGE [2026-09-03 09:01 +08:00] [WH400]: 提供按月每日发货台账，服务端强制代理商隔离而不是依赖页面筛选。
+@router.get("/orders/daily-shipments", response_model=DailyShipmentReport)
+def order_daily_shipments(month: str | None = None, db: Session = Depends(get_db), user: User = Depends(get_current_user)) -> DailyShipmentReport:
+    return daily_shipments(db, user, month)
 
 
 # CHANGE [2026-08-30 12:58 +08:00] [WH400]: 返回角色范围内的全部发货行，供申请与收件箱页面共用。

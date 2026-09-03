@@ -250,10 +250,14 @@ const tables = computed(() => [
 <template>
   <a-result v-if="user.role !== 'ADMIN'" status="403" title="仅管理员可维护后台配置" />
   <div v-else class="resource-page">
+    <!-- CHANGE [2026-09-03 14:48 +08:00] [WH400]: 用功能配置插画区分管理模块，保持刷新及配置表单原有交互。 -->
     <div class="page-title-row">
-      <div>
+      <div class="module-title-art">
+        <img src="/images/feature-results.svg" alt="" aria-hidden="true" width="88" height="72" decoding="async" />
+        <div>
         <a-typography-title :level="4">后台配置</a-typography-title
         ><a-typography-text type="secondary">维护账号、邮件归属和供应商路由</a-typography-text>
+        </div>
       </div>
       <a-button :loading="loading" @click="load"
         ><template #icon><ReloadOutlined /></template>刷新</a-button

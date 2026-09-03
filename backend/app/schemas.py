@@ -71,6 +71,23 @@ class ShipmentLineOut(BaseModel):
         return normalized.isoformat()
 
 
+# CHANGE [2026-09-03 09:01 +08:00] [WH400]: 显式区分全期余额、本月合计及历史未分日数量，保持十进制精度。
+class DailyShipmentRow(OrderLineOut):
+    dealer_id: int
+    dealer_code: str
+    undated_qty: Decimal
+    month_qty: Decimal
+    daily: dict[str, Decimal]
+
+
+# CHANGE [2026-09-03 09:01 +08:00] [WH400]: 返回包含无发货日的完整自然月列，供 Excel 式台账使用。
+class DailyShipmentReport(BaseModel):
+    month: str
+    date_basis: str = "requested_ship_date"
+    dates: list[str]
+    rows: list[DailyShipmentRow]
+
+
 class ShipmentRequestOut(BaseModel):
     id: int
     request_no: str

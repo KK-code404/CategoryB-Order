@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { computed, onUnmounted, reactive, ref, watch } from 'vue'
+// CHANGE [2026-09-03 09:01 +08:00] [WH400]: 每日明细按需加载，保持现有订单列表和业务弹窗不变。
+import { computed, defineAsyncComponent, onUnmounted, reactive, ref, watch } from 'vue'
 import {
   App,
   Alert as AAlert,
@@ -44,6 +45,10 @@ import type { DateRange } from '../utils/shipments'
 import StatusTag from '../components/StatusTag.vue'
 import ShipmentEditModal from '../components/ShipmentEditModal.vue'
 import ShipmentDetailModal from '../components/ShipmentDetailModal.vue'
+
+// CHANGE [2026-09-03 09:01 +08:00] [WH400]: 在订单台账内增加独立日历视图，默认仍展示原有汇总列表。
+const OrderDailyShipments = defineAsyncComponent(() => import('../components/OrderDailyShipments.vue'))
+const ordersView = ref('summary')
 
 const props = defineProps<{ resource: string; user: User }>()
 const { message } = App.useApp()
@@ -345,21 +350,32 @@ async function retryMail(mail: OutboundMail) {
 
 <template>
   <div class="resource-page">
+    <!-- CHANGE [2026-09-03 14:48 +08:00] [WH400]: 按台账、申请、邮箱和审计语义配置紧凑插画，避免新增大横幅挤占表格。 -->
     <div class="page-title-row">
-      <div>
+      <div class="module-title-art">
+        <!-- CHANGE [2026-09-03 15:20 +08:00] [WH400]: 邮件收件箱采用用户指定发布会插画，其余模块保持原映射。 -->
+        <img :src="`/images/${resource === 'orders' ? 'forecast' : resource === 'shipments' ? 'feature-results' : resource === 'inbox' ? 'mail-announcement' : 'data-output'}.svg`" alt="" aria-hidden="true" width="88" height="72" decoding="async" />
+        <div>
         <a-typography-title :level="4">{{ titles[resource] }}</a-typography-title
         ><a-typography-text type="secondary">{{
           resource === 'inbox' ? '原始邮件、解析结果与供应商发件统一留档' : '实时数据，以平台核销流水为准'
         }}</a-typography-text>
+        </div>
       </div>
-      <a-button :loading="loading" @click="load"
+      <a-button v-if="resource !== 'orders' || ordersView === 'summary'" :loading="loading" @click="load"
         ><template #icon><ReloadOutlined /></template>刷新</a-button
       >
     </div>
-    <a-alert v-if="loadError" class="page-alert" type="error" show-icon message="数据加载失败" :description="loadError"
+    <!-- CHANGE [2026-09-03 09:01 +08:00] [WH400]: 以视图切换入口保留原列表，独立加载每日台账及其错误提示。 -->
+    <div v-if="resource === 'orders'" class="order-view-tabs" role="tablist" aria-label="订单台账视图">
+      <a-button role="tab" :aria-selected="ordersView === 'summary'" :type="ordersView === 'summary' ? 'primary' : 'default'" @click="ordersView = 'summary'">订单汇总</a-button>
+      <a-button role="tab" :aria-selected="ordersView === 'daily'" :type="ordersView === 'daily' ? 'primary' : 'default'" @click="ordersView = 'daily'">每日发货明细</a-button>
+    </div>
+    <a-alert v-if="loadError && (resource !== 'orders' || ordersView === 'summary')" class="page-alert" type="error" show-icon message="数据加载失败" :description="loadError"
       ><template #action><a-button size="small" @click="load">重试</a-button></template></a-alert
     >
-    <section class="surface resource-table">
+    <OrderDailyShipments v-if="resource === 'orders' && ordersView === 'daily'" />
+    <section v-else class="surface resource-table">
       <a-space class="filter-row" wrap>
         <a-input-search v-model:value="search" placeholder="搜索编号、物料、客户或内容" allow-clear />
         <a-select

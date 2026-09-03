@@ -186,7 +186,8 @@ async function confirm() {
           <h2>早安，{{ user.display_name }}</h2>
           <p>当前有 {{ stats?.pending_emails ?? 0 }} 封邮件和 {{ stats?.match_exceptions ?? 0 }} 条匹配异常待处理。</p>
         </div>
-        <img src="/images/dashboard-team.webp" alt="团队成员协作处理订单与发货" />
+        <!-- CHANGE [2026-09-03 14:48 +08:00] [WH400]: 用用户提供的效率插画强化工作提示，保持业务操作区域独立。 -->
+        <img class="dashboard-efficiency-art" src="/images/efficiency.svg" alt="邮件与订单文档高效协作插画" decoding="async" />
       </aside>
     </div>
     <section class="workspace-grid">
@@ -197,16 +198,19 @@ async function confirm() {
             ><template #icon><ReloadOutlined /></template>刷新</a-button
           >
         </div>
-        <a-space class="filter-row" wrap>
-          <a-select v-model:value="statusFilter" :options="statusOptions" aria-label="状态筛选" />
-          <a-select
-            v-model:value="dealerFilter"
-            :options="[{ value: 'all', label: '全部客户' }, ...dealerOptions]"
-            aria-label="客户筛选"
-          />
-          <a-range-picker :value="dateRange ?? undefined" @update:value="(value) => (dateRange = value as DateRange)" />
-          <a-input-search v-model:value="search" placeholder="搜索申请号/订单号/零件号" allow-clear />
-        </a-space>
+        <!-- CHANGE [2026-09-03 08:56 +08:00] [WH400]: 隔离 Space 换行时的负外边距，避免筛选框与表头重叠。 -->
+        <div class="dashboard-filter-bar">
+          <a-space class="filter-row" wrap :style="{ marginBottom: 0 }">
+            <a-select v-model:value="statusFilter" :options="statusOptions" aria-label="状态筛选" />
+            <a-select
+              v-model:value="dealerFilter"
+              :options="[{ value: 'all', label: '全部客户' }, ...dealerOptions]"
+              aria-label="客户筛选"
+            />
+            <a-range-picker :value="dateRange ?? undefined" @update:value="(value) => (dateRange = value as DateRange)" />
+            <a-input-search v-model:value="search" placeholder="搜索申请号/订单号/零件号" allow-clear />
+          </a-space>
+        </div>
         <a-table
           row-key="id"
           size="small"

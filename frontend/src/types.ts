@@ -101,6 +101,26 @@ export interface AuditEvent {
   result: string
 }
 
+// CHANGE [2026-09-03 09:01 +08:00] [WH400]: Decimal 接口值按字符串或数字读取，区分本月流水与全期订单余额。
+export interface DailyShipmentRow extends Omit<OrderLine, 'ordered_qty' | 'reconciled_qty' | 'remaining_qty'> {
+  dealer_id: number
+  dealer_code: string
+  ordered_qty: number | string
+  reconciled_qty: number | string
+  remaining_qty: number | string
+  undated_qty: number | string
+  month_qty: number | string
+  daily: Record<string, number | string>
+}
+
+// CHANGE [2026-09-03 09:01 +08:00] [WH400]: 日历列由后端自然月生成，避免前后端时区或闰年不一致。
+export interface DailyShipmentReport {
+  month: string
+  date_basis: 'requested_ship_date'
+  dates: string[]
+  rows: DailyShipmentRow[]
+}
+
 export interface DashboardPayload {
   stats: DashboardStats
   lines: ShipmentLine[]
