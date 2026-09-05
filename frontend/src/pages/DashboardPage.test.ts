@@ -16,6 +16,8 @@ describe('Vue dashboard', () => {
     await flushPromises()
     expect(wrapper.find('.stat-strip').text()).toContain('待处理邮件1')
     expect(wrapper.find('.workspace-list').text()).toContain(line.request_no)
+    expect(wrapper.find('.workspace-list').text()).toContain('发货申请')
+    expect(wrapper.find('.workspace-list').text()).not.toContain('待核销发货申请')
     expect(wrapper.find('.request-detail').text()).toContain(line.product_name)
     expect(wrapper.find('.request-detail').text()).toContain('核销后余额70')
     await wrapper.find('input[placeholder="搜索申请号/订单号/零件号"]').setValue('not-found')

@@ -1,5 +1,6 @@
 // CHANGE [2026-09-03 09:01 +08:00] [WH400]: 为每日台账接口引入明确返回类型。
 import type { AdminConfig, AuditEvent, DailyShipmentReport, DashboardPayload, OrderLine, OutboundMail, ShipmentLine, ShipmentRequest, User } from '../types'
+import type { AnalyticsReport } from '../utils/reconciliationAnalytics'
 
 const API_BASE = import.meta.env.VITE_API_BASE || '/api'
 
@@ -31,6 +32,7 @@ export const authApi = {
 
 // CHANGE [2026-08-30 12:58 +08:00] [WH400]: 将独立读取并行化，减少工作台首屏等待时间。
 export const dataApi = {
+  reconciliationAnalytics: (start: string, end: string) => request<AnalyticsReport>(`/orders/reconciliation-analytics?start=${encodeURIComponent(start)}&end=${encodeURIComponent(end)}`),
   dashboard: () => request<DashboardPayload>('/dashboard'),
   orders: () => request<OrderLine[]>('/orders'),
   // CHANGE [2026-09-03 09:01 +08:00] [WH400]: 使用已认证只读接口取得月份流水，而不是由邮件状态推算数量。

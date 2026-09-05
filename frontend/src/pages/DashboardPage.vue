@@ -193,7 +193,7 @@ async function confirm() {
     <section class="workspace-grid">
       <div class="workspace-list surface">
         <div class="section-heading">
-          <a-typography-title :level="5">待核销发货申请</a-typography-title
+          <a-typography-title :level="5">发货申请</a-typography-title
           ><a-button :loading="loading" @click="load"
             ><template #icon><ReloadOutlined /></template>刷新</a-button
           >

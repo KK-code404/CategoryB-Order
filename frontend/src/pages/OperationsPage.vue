@@ -5,6 +5,7 @@ import { Alert as AAlert, Button as AButton, Spin as ASpin, App } from 'ant-desi
 import { dataApi } from '../api/client'
 import type { DailyShipmentRow, OutboundMail, ShipmentLine, User } from '../types'
 import { buildRisks, chinaDay, simulate } from '../utils/operations'
+import ReconciliationAnalytics from '../components/ReconciliationAnalytics.vue'
 
 const props = defineProps<{ user: User }>()
 const emit = defineEmits<{ navigate: [key: string] }>()
@@ -78,9 +79,10 @@ async function copyBrief() {
       <a-button :loading="loading" @click="load">刷新数据并重置沙盘</a-button>
     </header>
     <nav class="order-view-tabs" aria-label="驾驶舱模块">
-      <button v-for="item in [{ id: 'radar', label: '风险雷达' }, { id: 'sandbox', label: '发货沙盘' }, { id: 'brief', label: '业务简报' }]" :key="item.id" :class="{ active: tab === item.id }" :aria-pressed="tab === item.id" @click="tab = item.id">{{ item.label }}</button>
+      <button v-for="item in [{ id: 'analytics', label: '核销看板' }, { id: 'radar', label: '风险雷达' }, { id: 'sandbox', label: '发货沙盘' }, { id: 'brief', label: '业务简报' }]" :key="item.id" :class="{ active: tab === item.id }" :aria-pressed="tab === item.id" @click="tab = item.id">{{ item.label }}</button>
     </nav>
-    <a-alert v-if="error" type="error" show-icon :message="error" description="本次加载失败，旧快照已隐藏。请刷新重试。" />
+    <ReconciliationAnalytics v-if="tab === 'analytics'" @navigate="key => emit('navigate', key)" />
+    <a-alert v-else-if="error" type="error" show-icon :message="error" description="本次加载失败，旧快照已隐藏。请刷新重试。" />
     <a-spin v-else-if="loading" aria-label="加载驾驶舱" />
     <template v-else-if="loadedAt">
       <p class="operations-snapshot">上海时间 {{ loadedAt }} · 只读快照，刷新会清空沙盘输入 · {{ user.role === 'DEALER' ? '仅本人代理商数据，不含供应商邮件' : '授权业务数据；供应商邮件仅最近 500 封' }}</p>

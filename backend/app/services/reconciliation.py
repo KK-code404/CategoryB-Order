@@ -83,7 +83,7 @@ def reverse_line(db: Session, actor: User, line: ShipmentLine, reason: str, ip_a
     db.add(LedgerEntry(shipment_line_id=line.id, order_line_id=order_line.id, entry_type=LedgerType.REVERSAL, quantity=line.quantity, actor_id=actor.id, reason=reason, reverses_entry_id=original.id))
 
     mapping = db.scalar(select(MaterialMapping).where(MaterialMapping.material_no == line.material_no))
-    if mapping:
+    if mapping and line.request.uid_validity != 'approved-history':
         supplier = db.get(Supplier, mapping.supplier_id)
         assert supplier
         key = hashlib.sha256(f"CORRECTION:{line.id}:{original.id}".encode()).hexdigest()

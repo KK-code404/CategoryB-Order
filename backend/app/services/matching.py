@@ -18,6 +18,7 @@ def match_shipment_line(db: Session, line: ShipmentLine) -> ShipmentLine:
         return line
 
     line.part_no = mapping.part_no
+    line.product_name = mapping.product_name
     candidates = db.scalars(
         select(SalesOrderLine).where(
             SalesOrderLine.dealer_id == line.request.dealer_id,
