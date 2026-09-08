@@ -52,19 +52,35 @@ def seed_database(db: Session) -> None:
     db.flush()
 
     now = datetime.now(timezone.utc)
-    demo_rows = [
-        (dealers[0], "TEST-BATCH-A", "TEST-ORD-001", "MAT-D01", Decimal("40"), ShipmentStatus.PENDING, "测试收货地址一", "测试申请 A"),
-        (dealers[0], "TEST-BATCH-B", "TEST-ORD-002", "MAT-G01", Decimal("60"), ShipmentStatus.PENDING, "测试收货地址二", "测试申请 B"),
-        (dealers[0], "TEST-BATCH-C", "TEST-ORD-001", "MAT-D02", Decimal("20"), ShipmentStatus.EXCEPTION, "测试收货地址三", "测试异常：余额不足"),
-        (dealers[1], "TEST-BATCH-D", "TEST-ORD-003", "MAT-H01", Decimal("30"), ShipmentStatus.PENDING, "测试收货地址四", "测试申请 D"),
-        (dealers[2], "TEST-BATCH-E", "TEST-ORD-999", "MAT-G01", Decimal("56"), ShipmentStatus.EXCEPTION, "测试收货地址五", "测试异常：订单待补录"),
+    scenarios = [
+        (dealers[0], "TEST-ORD-001", "MAT-D01", Decimal("40"), ShipmentStatus.PENDING, "测试正常申请"),
+        (dealers[0], "TEST-ORD-002", "MAT-G01", Decimal("16"), ShipmentStatus.PENDING, "测试正常申请"),
+        (dealers[1], "TEST-ORD-003", "MAT-H01", Decimal("20"), ShipmentStatus.PENDING, "测试正常申请"),
+        (dealers[0], "TEST-ORD-001", "MAT-D01", Decimal("32"), ShipmentStatus.PENDING, "测试加急申请"),
+        (dealers[2], "TEST-ORD-999", "MAT-G01", Decimal("12"), ShipmentStatus.EXCEPTION, "测试异常：订单待补录"),
+        (dealers[0], "TEST-ORD-001", "MAT-D02", Decimal("8"), ShipmentStatus.EXCEPTION, "测试异常：余额不足"),
+        (dealers[0], "TEST-ORD-002", "MAT-G01", Decimal("20"), ShipmentStatus.PENDING, "测试正常申请"),
     ]
+    demo_rows = []
+    for cycle in range(4):
+        for dealer, order_no, material_no, base_quantity, desired_status, remark in scenarios:
+            row_number = len(demo_rows) + 1
+            demo_rows.append((
+                dealer,
+                f"TEST-BATCH-{row_number:02d}",
+                order_no,
+                material_no,
+                base_quantity + Decimal(cycle * 2),
+                desired_status,
+                f"测试收货地址{row_number:02d}",
+                remark,
+            ))
     for index, (dealer, batch, order_no, material_no, quantity, desired_status, address, remark) in enumerate(demo_rows, start=1):
         request = ShipmentRequest(request_no=f"TEST-SHIP-{index:04d}", dealer_id=dealer.id, sender_email=dealer.email, subject=f"[测试发货申请] {dealer.code} {batch}", batch_no=batch, message_id=f"<test-{index}@example.test>", imap_uid=str(index), uid_validity="test", attachment_name=f"{batch}.xlsx", attachment_sha256=f"{index:064x}", attachment_path=f"storage/test/{batch}.xlsx", received_at=now - timedelta(minutes=index * 17))
         db.add(request)
         db.flush()
         mapping = next((item for item in mappings if item.material_no == material_no), None)
-        line = ShipmentLine(request_id=request.id, row_fingerprint=f"{index + 100:064x}", order_no=order_no, material_no=material_no, product_name=mapping.product_name if mapping else "测试待匹配产品", quantity=quantity, receiver=f"测试收货人{index}", phone=f"000-0000-{index:04d}", address=address, requested_ship_date=date.today() + timedelta(days=index), remark=remark, status=ShipmentStatus.PENDING)
+        line = ShipmentLine(request_id=request.id, row_fingerprint=f"{index + 100:064x}", order_no=order_no, material_no=material_no, product_name=mapping.product_name if mapping else "测试待匹配产品", quantity=quantity, receiver=f"测试收货人{index:02d}", phone=f"000-0000-{index:04d}", address=address, requested_ship_date=date.today() + timedelta(days=(index % 10) + 1), remark=remark, status=ShipmentStatus.PENDING)
         line.request = request
         db.add(line)
         match_shipment_line(db, line)
@@ -73,7 +89,7 @@ def seed_database(db: Session) -> None:
             line.exception_reason = "测试异常：需要人工核对订单信息"
 
     db.add_all([
-        AuditEvent(actor_name="测试系统", action="邮件抓取", object_type="ShipmentRequest", object_id="TEST-SHIP-0001", detail="接收并解析 1 条测试发货明细", result="成功", dealer_id=dealers[0].id, ip_address="system"),
+        AuditEvent(actor_name="测试系统", action="邮件抓取", object_type="ShipmentRequest", object_id="TEST-SHIP-0001", detail="生成 28 条测试发货明细", result="成功", dealer_id=dealers[0].id, ip_address="system"),
         AuditEvent(actor_name="测试销售员", action="核销", object_type="ShipmentLine", object_id="测试记录", detail="核销测试物料 MAT-G01 数量 50，核销后余额 290", result="成功", dealer_id=dealers[0].id, ip_address="127.0.0.1"),
         AuditEvent(actor_name="测试审核员", action="退回修改", object_type="ShipmentLine", object_id="测试记录", detail="数量超过剩余未发数量，已退回测试代理商修改", result="已退回", dealer_id=dealers[0].id, ip_address="127.0.0.1"),
     ])
