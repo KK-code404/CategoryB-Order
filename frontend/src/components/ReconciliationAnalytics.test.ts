@@ -9,7 +9,7 @@ vi.mock('../api/client', () => ({ dataApi: { reconciliationAnalytics: vi.fn() } 
 const row: AnalyticsRow = { id: 1, dealer_id: 1, dealer_code: 'A', dealer_name: '测试代理商甲', order_no: 'O1', part_no: 'P1', unit: '桶', ordered_qty: '100', opening_qty: '80', closing_qty: '70', undated_qty: '0', daily: { '2026-08-27': '10' } }
 const report: AnalyticsReport = { start: '2026-08-27', end: '2026-09-03', dates: ['2026-08-27', '2026-08-28'], generated_at: '2026-09-03T10:00:00Z',
   actual: [row, { ...row, id: 2, dealer_id: 2, dealer_name: '测试代理商乙', closing_qty: '75', daily: { '2026-08-27': '5' } }],
-  simulation: { available: false, imported: true, cutoff: '2026-08-26', start: '2026-08-27', end: '2026-09-03', version: 'conservative-v1', reason: '已纳入正式核销', rows: [], events: [] } }
+  simulation: { available: false, imported: true, cutoff: '2026-08-26', start: '2026-08-27', end: '2026-09-03', version: 'test-dataset-v1', reason: '已纳入测试数据', rows: [], events: [] } }
 beforeEach(() => { vi.mocked(dataApi.reconciliationAnalytics).mockReset().mockResolvedValue(structuredClone(report)) })
 describe('图表核销看板', () => {
   it('shows six charts with formal data and no tables, forms or simulation controls', async () => {

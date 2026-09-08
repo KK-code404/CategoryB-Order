@@ -8,14 +8,14 @@ import OrderDailyShipments from './OrderDailyShipments.vue'
 
 vi.mock('../api/client', () => ({ dataApi: { dailyShipments: vi.fn() } }))
 const row: DailyShipmentRow = {
-  id: 1, dealer_id: 1, dealer_code: 'A', dealer_name: '代理商A', order_no: 'ORDER1', part_no: 'TK10018',
-  material_no: 'TK10018X', product_name: '测试机油', unit: '桶', version: 1,
+  id: 1, dealer_id: 1, dealer_code: 'TDA', dealer_name: '测试代理商甲', order_no: 'TEST-ORD-001', part_no: 'PART-D01',
+  material_no: 'MAT-D01', product_name: '测试柴油机油 A 18L', unit: '桶', version: 1,
   ordered_qty: '100', reconciled_qty: '42.5', remaining_qty: '57.5', undated_qty: '40', month_qty: '2.5',
   daily: { '2026-02-03': '2.5' },
 }
 const report: DailyShipmentReport = {
   month: '2026-02', date_basis: 'requested_ship_date', dates: ['2026-02-01', '2026-02-02', '2026-02-03'],
-  rows: [row, { ...row, id: 2, dealer_id: 2, dealer_code: 'B', dealer_name: '代理商B', part_no: 'OTHER', material_no: 'OTHER-X', unit: '箱', daily: {}, month_qty: 0 }],
+  rows: [row, { ...row, id: 2, dealer_id: 2, dealer_code: 'TDB', dealer_name: '测试代理商乙', part_no: 'PART-OTHER', material_no: 'MAT-OTHER', unit: '箱', daily: {}, month_qty: 0 }],
 }
 beforeEach(() => { vi.mocked(dataApi.dailyShipments).mockReset().mockResolvedValue(structuredClone(report)) })
 
@@ -35,13 +35,13 @@ describe('每日发货台账', () => {
   it('switches same-number orders independently and searches parts', async () => {
     const wrapper = mountPage(OrderDailyShipments)
     await flushPromises()
-    await button(wrapper, 'ORDER1 · B').trigger('click')
+    await button(wrapper, 'TEST-ORD-001 · TDB').trigger('click')
     expect(wrapper.findAll('tbody tr')).toHaveLength(1)
-    expect(wrapper.find('tbody').text()).toContain('OTHER')
-    expect(wrapper.find('tbody').text()).not.toContain('TK10018')
-    await wrapper.find('input[placeholder="搜索订单号、零件或客户"]').setValue('TK10018')
+    expect(wrapper.find('tbody').text()).toContain('PART-OTHER')
+    expect(wrapper.find('tbody').text()).not.toContain('PART-D01')
+    await wrapper.find('input[placeholder="搜索订单号、零件或客户"]').setValue('PART-D01')
     expect(wrapper.findAll('tbody tr')).toHaveLength(1)
-    expect(wrapper.find('tbody').text()).toContain('TK10018')
+    expect(wrapper.find('tbody').text()).toContain('PART-D01')
     await wrapper.find('input[placeholder="搜索订单号、零件或客户"]').setValue('missing')
     expect(wrapper.text()).toContain('没有符合条件的订单')
   })
@@ -75,9 +75,9 @@ describe('每日发货台账', () => {
     const wrapper = mountPage(OrderDailyShipments)
     await wrapper.find('button[aria-label="下个月"]').trigger('click')
     await flushPromises()
-    expect(wrapper.find('tbody').text()).toContain('ORDER1')
+    expect(wrapper.find('tbody').text()).toContain('TEST-ORD-001')
     finishFirst({ ...report, rows: [] })
     await flushPromises()
-    expect(wrapper.find('tbody').text()).toContain('ORDER1')
+    expect(wrapper.find('tbody').text()).toContain('TEST-ORD-001')
   })
 })

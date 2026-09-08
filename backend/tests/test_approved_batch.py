@@ -52,15 +52,15 @@ def test_promotion_once_keeps_evidence_no_mail_and_retires_scenario(client):
         assert sum(Decimal(q) for r in report['actual'] for q in r['daily'].values()) == sum(Decimal(e['quantity']) for e in events)
         for line_id in result['line_ids']:
             line = db.get(ShipmentLine, line_id)
-            assert '用户明确批准' in line.remark
+            assert 'test-dataset-v1' in line.remark
             assert line.receiver == line.phone == line.address == ''
             assert line.request.uid_validity == 'approved-history'
-    assert client.post('/api/auth/login', json={'email': 'sales@example.com', 'password': 'Demo123!'}).status_code == 200
+    assert client.post('/api/auth/login', json={'email': 'sales@example.test', 'password': 'Demo123!'}).status_code == 200
     response = client.get('/api/shipment-lines')
     assert response.status_code == 200
     approved = [line for line in response.json() if line['id'] in result['line_ids']]
     assert approved and {line['remark'] for line in approved} == {'历史发货补录'}
-    assert all('conservative-v1' not in line['remark'] and 'SIM-' not in line['remark'] for line in approved)
+    assert all('SIM-' not in line['remark'] for line in approved)
 
 
 def test_insufficient_balance_rolls_back_whole_batch(client):

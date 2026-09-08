@@ -27,7 +27,7 @@ def client():
 # CHANGE [2026-08-30 12:58 +08:00] [WH400]: 复用销售登录步骤，让业务测试只关注核销结果。
 @pytest.fixture()
 def sales_client(client: TestClient):
-    response = client.post("/api/auth/login", json={"email": "sales@example.com", "password": "Demo123!"})
+    response = client.post("/api/auth/login", json={"email": "sales@example.test", "password": "Demo123!"})
     assert response.status_code == 200
     return client
 

@@ -54,7 +54,7 @@ def test_read_only_deterministic_and_unit_scoped(sales_client):
 
 def test_authorization_and_missing_snapshot(client):
     assert client.get(URL).status_code == 401
-    client.post("/api/auth/login", json={"email": "north@dealer.com", "password": "Demo123!"})
+    client.post("/api/auth/login", json={"email": "dealer-a@example.test", "password": "Demo123!"})
     assert client.get(URL).json()["simulation"]["available"] is False
     install_snapshot()
     report = client.get(URL + "&dealer_id=2").json()
@@ -97,12 +97,12 @@ def test_invalid_range(sales_client, query):
 
 def test_simulator_limits_exclusion_and_filter_stability():
     rows = [dict(key=f"A|{i}|P", dealer="A", unit="桶", order_no=str(i), remaining_qty="100", ordered_qty="100") for i in range(10)]
-    rows += [dict(key="A|200018171|P", dealer="A", unit="桶", order_no="200018171 ", remaining_qty="10000", ordered_qty="10000")]
+    rows += [dict(key="A|TEST-ORD-EXCLUDED|P", dealer="A", unit="桶", order_no="TEST-ORD-EXCLUDED ", remaining_qty="10000", ordered_qty="10000")]
     rows += [dict(key="A|zero|P", dealer="A", unit="桶", order_no="zero", remaining_qty="0", ordered_qty="100")]
     history = {r["key"]: {date(2026, 8, 24): Decimal(10)} for r in rows[:10]}
     keys = {r["key"] for r in rows}
     events = simulate_history(rows, history, keys)
     assert sum(Decimal(e["quantity"]) for e in events) <= 45
-    assert all("200018171" not in e["key"] and "zero" not in e["key"] for e in events)
+    assert all("TEST-ORD-EXCLUDED" not in e["key"] and "zero" not in e["key"] for e in events)
     assert len(events) <= 6
     assert events == simulate_history(list(reversed(rows)), history, keys)

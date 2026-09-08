@@ -32,13 +32,13 @@ def test_daily_aggregation_and_reversal(sales_client):
     assert all(row["daily"] == {} for row in before["rows"])
     assert sales_client.post("/api/shipment-lines/confirm", json={"line_ids": [first, second]}).status_code == 200
     report = sales_client.get(url).json()
-    row = next(row for row in report["rows"] if row["part_no"] == "TK10018")
+    row = next(row for row in report["rows"] if row["part_no"] == "PART-D01")
     assert Decimal(row["daily"]["2026-02-03"]) == Decimal("42.50")
     assert Decimal(row["month_qty"]) == Decimal("42.50")
     assert Decimal(row["remaining_qty"]) == Decimal("1507.50")
     assert Decimal(row["undated_qty"]) == Decimal("450")
     assert sales_client.post(f"/api/shipment-lines/{first}/reverse", json={"reason": "客户取消发货"}).status_code == 200
-    row = next(row for row in sales_client.get(url).json()["rows"] if row["part_no"] == "TK10018")
+    row = next(row for row in sales_client.get(url).json()["rows"] if row["part_no"] == "PART-D01")
     assert Decimal(row["daily"]["2026-02-03"]) == Decimal("2.50")
     assert Decimal(row["remaining_qty"]) == Decimal("1547.50")
     assert Decimal(row["undated_qty"]) == Decimal("450")
@@ -52,8 +52,8 @@ def test_month_boundaries(sales_client):
         db.get(ShipmentLine, second).requested_ship_date = date(2026, 3, 1)
         db.commit()
     sales_client.post("/api/shipment-lines/confirm", json={"line_ids": [first, second]})
-    feb = next(r for r in sales_client.get("/api/orders/daily-shipments?month=2026-02").json()["rows"] if r["part_no"] == "TK10018")
-    mar = next(r for r in sales_client.get("/api/orders/daily-shipments?month=2026-03").json()["rows"] if r["part_no"] == "TK10018")
+    feb = next(r for r in sales_client.get("/api/orders/daily-shipments?month=2026-02").json()["rows"] if r["part_no"] == "PART-D01")
+    mar = next(r for r in sales_client.get("/api/orders/daily-shipments?month=2026-03").json()["rows"] if r["part_no"] == "PART-D01")
     assert Decimal(feb["month_qty"]) == 40
     assert Decimal(mar["month_qty"]) == Decimal("2.5")
     assert feb["remaining_qty"] == mar["remaining_qty"]
@@ -65,9 +65,9 @@ def test_dealer_scope(client):
     assert client.get("/api/orders/daily-shipments").status_code == 401
     with SessionLocal() as db:
         foreign = db.scalar(select(SalesOrderLine).where(SalesOrderLine.dealer_id == 2))
-        foreign.order_no = "200017736"
+        foreign.order_no = "TEST-ORD-001"
         db.commit()
-    client.post("/api/auth/login", json={"email": "north@dealer.com", "password": "Demo123!"})
+    client.post("/api/auth/login", json={"email": "dealer-a@example.test", "password": "Demo123!"})
     report = client.get("/api/orders/daily-shipments?month=2026-02&dealer_id=2").json()
     assert len(report["rows"]) == 3
     assert all(row["dealer_id"] == 1 for row in report["rows"])

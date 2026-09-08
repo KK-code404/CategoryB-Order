@@ -66,7 +66,7 @@
    npm run dev
    ```
 
-4. 打开 `http://localhost:5173`。演示数据开启时可使用 `sales@example.com / Demo123!`。
+4. 打开 `http://localhost:5173`。演示数据开启时可使用 `sales@example.test / Demo123!`。
 
 前端验证命令（在 `frontend` 目录执行）：
 

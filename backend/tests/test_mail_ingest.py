@@ -17,7 +17,7 @@ def _shipment_xlsx(formula: bool = False) -> bytes:
     sheet = workbook.active
     sheet.title = "发货申请"
     sheet.append(["订单号", "物料号", "品名", "数量", "收货人", "联系电话", "收货地址", "要求发货日期", "备注"])
-    sheet.append(["200017736", "TK10018X", "红旋风机油", "=20+20" if formula else 40, "杨冬雪", "15940217200", "济南市天桥区工业园", "2026-09-01", "终端客户需求"])
+    sheet.append(["TEST-ORD-001", "MAT-D01", "测试柴油机油 A 18L", "=20+20" if formula else 40, "测试收货人一", "000-0000-0001", "测试收货地址一", "2026-09-01", "测试终端需求"])
     buffer = BytesIO()
     workbook.save(buffer)
     return buffer.getvalue()
@@ -26,10 +26,10 @@ def _shipment_xlsx(formula: bool = False) -> bytes:
 # CHANGE [2026-08-30 12:58 +08:00] [WH400]: 组装完整 RFC822 邮件以验证主题、发件人、附件和幂等链路。
 def _message_bytes(content: bytes) -> bytes:
     message = EmailMessage()
-    message["From"] = "north@dealer.com"
-    message["To"] = "shipments@example.com"
-    message["Subject"] = "[发货申请] JNTQ BATCH-TEST-001"
-    message["Message-ID"] = "<batch-test-001@example.com>"
+    message["From"] = "dealer-a@example.test"
+    message["To"] = "shipments@example.test"
+    message["Subject"] = "[发货申请] TDA TEST-BATCH-001"
+    message["Message-ID"] = "<test-batch-001@example.test>"
     message.set_content("请按附件安排发货。")
     message.add_attachment(content, maintype="application", subtype="vnd.openxmlformats-officedocument.spreadsheetml.sheet", filename="发货申请.xlsx")
     return message.as_bytes()
@@ -43,7 +43,7 @@ def test_mail_ingest_is_idempotent(client):
     with SessionLocal() as db:
         second = ingest_message_bytes(db, raw, "9001", "77")
         assert first == second
-        assert db.query(ShipmentRequest).filter(ShipmentRequest.message_id == "<batch-test-001@example.com>").count() == 1
+        assert db.query(ShipmentRequest).filter(ShipmentRequest.message_id == "<test-batch-001@example.test>").count() == 1
 
 
 # CHANGE [2026-08-30 12:58 +08:00] [WH400]: 验证带公式附件在进入业务解析前被拒绝。
@@ -56,5 +56,5 @@ def test_formula_is_rejected(client):
 def test_distributed_shipment_template_is_parseable(client):
     template = BytesIO((Path(__file__).parents[2] / 'frontend' / 'public' / 'templates' / '发货申请标准模板.xlsx').read_bytes())
     rows = parse_shipment_workbook(template.getvalue(), "发货申请标准模板.xlsx")
-    assert rows[0]["订单号"] == "200017736"
-    assert rows[0]["物料号"] == "TK10018X"
+    assert rows[0]["订单号"] == "TEST-ORD-001"
+    assert rows[0]["物料号"] == "MAT-D01"

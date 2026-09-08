@@ -18,9 +18,9 @@ from ..models import ImportJob, LedgerEntry, LedgerType, SalesOrderLine, Shipmen
 
 CUTOFF = date(2026, 8, 26)
 SIM_END = date(2026, 9, 3)
-IMPORT_TOKEN = "5a6fa68cf8fc63fd9a9d86b033c890012bab040b8dcb1027"
-PROMOTION_TOKEN = "approved-20260827-20260903-v1"
-EXCLUDED_ORDERS = {"200018171"}
+IMPORT_TOKEN = "test-data-snapshot-v1"
+PROMOTION_TOKEN = "test-approved-batch-v1"
+EXCLUDED_ORDERS = {"TEST-ORD-EXCLUDED"}
 ZERO = Decimal(0)
 
 
@@ -119,7 +119,7 @@ def reconciliation_analytics(db: Session, user: User, start: date, end: date) ->
         return dict(start=start.isoformat(), end=end.isoformat(), dates=[d.isoformat() for d in days_between(start, end)],
                     generated_at=datetime.now(timezone.utc).isoformat(), actual=actual_rows,
                     simulation=dict(available=False, imported=True, cutoff=CUTOFF.isoformat(), start="2026-08-27",
-                                    end=SIM_END.isoformat(), version="conservative-v1", rows=[], events=[],
+                                    end=SIM_END.isoformat(), version="test-dataset-v1", rows=[], events=[],
                                     reason="这批数据已获用户确认并纳入正式核销，请查看正式台账"))
 
     job = db.scalar(select(ImportJob).where(ImportJob.token == IMPORT_TOKEN, ImportJob.committed_at.is_not(None)))
@@ -162,6 +162,6 @@ def reconciliation_analytics(db: Session, user: User, start: date, end: date) ->
     return dict(start=start.isoformat(), end=end.isoformat(), dates=[d.isoformat() for d in days_between(start, end)],
                 generated_at=datetime.now(timezone.utc).isoformat(), actual=actual_rows,
                 simulation=dict(available=bool(scenario_rows), cutoff=CUTOFF.isoformat(), start="2026-08-27", end=SIM_END.isoformat(),
-                                version="conservative-v1", rows=scenario_rows,
+                                version="test-dataset-v1", rows=scenario_rows,
                                 events=[dict(id=e["id"], order_line_id=visible[e["key"]].id, date=e["date"], quantity=e["quantity"], simulated=True) for e in events],
                                 reason="" if scenario_rows else "当前账号没有本次历史导入的订单，无法生成这批模拟数据"))

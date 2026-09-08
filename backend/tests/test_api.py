@@ -34,12 +34,12 @@ def test_plain_account_login(client: TestClient):
 
 # CHANGE [2026-08-30 12:58 +08:00] [WH400]: 验证代理商只能读取自己的订单与发货记录。
 def test_dealer_data_isolation(client: TestClient):
-    login = client.post("/api/auth/login", json={"email": "north@dealer.com", "password": "Demo123!"})
+    login = client.post("/api/auth/login", json={"email": "dealer-a@example.test", "password": "Demo123!"})
     assert login.status_code == 200
     orders = client.get("/api/orders").json()
     lines = client.get("/api/shipment-lines").json()
-    assert orders and all(item["dealer_name"] == "济南天桥区蓝翔客户" for item in orders)
-    assert lines and all(item["dealer_name"] == "济南天桥区蓝翔客户" for item in lines)
+    assert orders and all(item["dealer_name"] == "测试代理商甲" for item in orders)
+    assert lines and all(item["dealer_name"] == "测试代理商甲" for item in lines)
     assert client.post("/api/shipment-lines/confirm", json={"line_ids": [lines[0]["id"]]}).status_code == 403
 
 
@@ -73,7 +73,7 @@ def test_order_import_preview_and_commit(client: TestClient):
     sheet.append(["销售订单批量导入"])
     sheet.append(["仅管理员使用，上传后先预览。"])
     sheet.append(["代理商编码", "订单号", "零件号", "物料号", "品名", "订单数量", "单位", "品牌/供应商编码"])
-    sheet.append(["JNTQ", "200020001", "TK10018", "TK10018X", "测试油品", 100, "桶", "DFL"])
+    sheet.append(["TDA", "TEST-ORD-101", "PART-D01", "MAT-D01", "测试柴油机油 A 18L", 100, "桶", "TSUP"])
     buffer = BytesIO()
     workbook.save(buffer)
     preview = client.post("/api/orders/import/preview", files={"file": ("orders.xlsx", buffer.getvalue(), "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")})
@@ -86,15 +86,15 @@ def test_order_import_preview_and_commit(client: TestClient):
 
 # CHANGE [2026-08-30 12:58 +08:00] [WH400]: 验证管理员可维护供应商、物料与账号，同时普通销售无权读取配置。
 def test_admin_master_data_permissions(client: TestClient):
-    client.post("/api/auth/login", json={"email": "sales@example.com", "password": "Demo123!"})
+    client.post("/api/auth/login", json={"email": "sales@example.test", "password": "Demo123!"})
     assert client.get("/api/admin/config").status_code == 403
     client.post("/api/auth/logout")
     client.post("/api/auth/login", json={"email": "admin@example.com", "password": "Demo123!"})
-    supplier = client.post("/api/admin/suppliers", json={"code": "NEW", "name": "新增供应商", "email": "new-supplier@example.com"})
+    supplier = client.post("/api/admin/suppliers", json={"code": "NEW", "name": "新增测试供应商", "email": "new-supplier@example.com"})
     assert supplier.status_code == 200
     material = client.post("/api/admin/materials", json={"material_no": "NEW001X", "part_no": "NEW001", "product_name": "新增测试油品", "brand_code": "NEW", "supplier_code": "NEW"})
     assert material.status_code == 200
-    created_user = client.post("/api/admin/users", json={"email": "new-dealer-user@example.com", "display_name": "新增代理商用户", "password": "StrongPass123!", "role": "DEALER", "dealer_code": "JNTQ"})
+    created_user = client.post("/api/admin/users", json={"email": "new-dealer-user@example.com", "display_name": "新增测试代理商用户", "password": "StrongPass123!", "role": "DEALER", "dealer_code": "TDA"})
     assert created_user.status_code == 200
     config = client.get("/api/admin/config").json()
     assert any(item["material_no"] == "NEW001X" for item in config["materials"])

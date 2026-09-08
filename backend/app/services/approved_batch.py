@@ -84,7 +84,7 @@ def promote_approved_batch(db: Session, actor: User, approved_events: list[dict]
             request_id=requests[key].id, row_fingerprint=hashlib.sha256(f"{PROMOTION_TOKEN}/{event['id']}".encode()).hexdigest(),
             order_no=order.order_no, material_no=order.material_no, part_no=order.part_no, product_name=order.product_name,
             quantity=quantity, receiver='', phone='', address='', requested_ship_date=date.fromisoformat(event['date']),
-            remark=f"来源：conservative-v1 模拟批次 {event['id']}；用户明确批准按正式业务补录；未提供收货信息，不代表物流签收，不发邮件",
+            remark=f"测试数据集 test-dataset-v1；测试批次 {event['id']}；不代表真实物流签收，不发邮件",
             status=ShipmentStatus.RECONCILED, matched_order_line_id=order.id,
         )
         db.add(line)

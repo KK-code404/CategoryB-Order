@@ -54,7 +54,7 @@ export const request: ShipmentRequest = {
 export const mail: OutboundMail = {
   id: 12,
   kind: 'SHIPMENT',
-  recipient: 'supplier@example.com',
+  recipient: 'supplier-a@example.test',
   subject: '发货指令',
   status: 'FAILED',
   attempts: 5,
